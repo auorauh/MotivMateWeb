@@ -1,10 +1,10 @@
-import { StyleSheet, View, Text, Pressable, Modal, Switch, Button, Animated, Vibration} from 'react-native';
+import { StyleSheet, View, Text, Pressable, Modal, Switch, Button, Animated, Vibration} from '../platform';
 import { useEffect, useState, useRef } from 'react'
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import * as Notifications from 'expo-notifications';
-import { getAllScheduledNotificationsAsync, cancelAllScheduledNotificationsAsync } from 'expo-notifications';
+import FontAwesome5 from '../platform/icons';
+import * as Notifications from '../platform/notifications';
+import { getAllScheduledNotificationsAsync, cancelAllScheduledNotificationsAsync } from '../platform/notifications';
 import axios from 'axios';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from '../platform/navigation';
 import { getLocalData, saveLocalData, deleteLocalData } from '../functions/localDataUtility';
 import { red, yellow, blue, lavender, dark, mint, peach, coral, sky, sage} from '../functions/colors';
 import TextFont from './TextFont';

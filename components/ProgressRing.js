@@ -1,5 +1,5 @@
 import React from 'react';
-import { Svg, Circle } from 'react-native-svg';
+import { Svg, Circle } from '../platform/svg';
 
 export default function ProgressRing( props ) {
   const size = 200; // size of the circle in pixels

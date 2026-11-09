@@ -1,11 +1,38 @@
-import { StyleSheet, View, Text, FlatList, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, FlatList, ScrollView } from '../platform';
 import TextFont from './TextFont';
 import { useState, useEffect } from 'react';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '../platform/icons';
 import ProgressRing from './ProgressRing';
-import DottedBackground from '../assets/DottedBackground';
-import DarkCircles from '../assets/DarkCircles';
-import LightCircles from '../assets/LightCircles';
+
+function RingWash({ theme }) {
+  return (
+    <svg className="mm-card-bg" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="400" height="160" fill={theme.background} />
+    </svg>
+  );
+}
+
+function GraphWash({ theme }) {
+  const ink = theme.primary;
+  return (
+    <svg className="mm-ring-target" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="78" fill="none" stroke={ink} strokeOpacity="0.4" strokeWidth="16" />
+      <circle cx="100" cy="100" r="54" fill="none" stroke={ink} strokeOpacity="0.28" strokeWidth="12" />
+      <circle cx="100" cy="100" r="32" fill={ink} fillOpacity="0.14" />
+    </svg>
+  );
+}
+
+function ChartWash({ theme }) {
+  const ink = theme.primary;
+  return (
+    <svg className="mm-card-bg" viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden="true">
+      <rect width="400" height="200" fill={theme.background} />
+      <path d="M0 118 C 70 78, 130 150, 210 108 S 330 62, 400 96 V 200 H 0 Z" fill={ink} fillOpacity="0.34" />
+      <path d="M0 148 C 90 118, 150 176, 240 142 S 350 112, 400 132 V 200 H 0 Z" fill={ink} fillOpacity="0.22" />
+    </svg>
+  );
+}
 
 function AnalyticsPage(props) {
   const [progress, setProgress] = useState(0);
@@ -52,15 +79,17 @@ function AnalyticsPage(props) {
       <View style={[styles.analyticsPage]}>
         
         <View style={[styles.ringContainer , {borderColor:props.userObj.theme.secondary}]}>
+            <RingWash theme={props.userObj.theme} />
             <TextFont style={[styles.dailyHeader, {color:props.theme.secondary}]} >You completed {percent}% of your daily goals.</TextFont>
             <View style={styles.progressRing}>
+                <GraphWash theme={props.userObj.theme} />
                 <ProgressRing progress={percent} theme={props.userObj.theme}/>
             </View>
-            {props.theme.secondary == 'black' ? <LightCircles/> : <DarkCircles/>}
           </View>
           <View style={styles.userData}>
 
 <View style={styles.container}>
+  <ChartWash theme={props.userObj.theme} />
   <TextFont style={[styles.graphHeader, {color:props.theme.secondary}]}>Daily Score last 14 days</TextFont>
   <View style={styles.graph}>
     {props.userObj.lastTwoWeeks.map((value, index) => (
@@ -74,7 +103,6 @@ function AnalyticsPage(props) {
     <TextFont style={{color:props.theme.secondary}}>^14 Days Ago</TextFont>
     <TextFont style={{color:props.theme.secondary}}>Yesterday^</TextFont>
   </View>
-  <DottedBackground/>
 </View>       
 </View>
   <View style={[styles.monthReview, {borderColor: props.userObj.theme.secondary}]}>
@@ -150,11 +178,13 @@ const styles = StyleSheet.create({
     justifyContent:  'space-between',
   },
   ringContainer: {
+    position: 'relative',
+    zIndex: 0,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    maxHeight: '10%',
+    minHeight: 140,
     borderRadius: 15,
     overflow: 'hidden'
   },
@@ -163,21 +193,23 @@ const styles = StyleSheet.create({
     width: '60%',
     fontSize: 20,
     paddingLeft: '10%',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: {width: -1, height: 1},
-    textShadowRadius: 12
+    textShadowColor: 'rgba(255, 249, 239, 0.8)',
+    textShadowOffset: {width: 0, height: 0},
+    textShadowRadius: 6
   },
   progressRing: {
+    position: 'relative',
     transform: [{ rotate: '-90deg' }],
     alignItems: 'center',
+    justifyContent: 'center',
   },
   container: {
+    position: 'relative',
+    zIndex: 0,
     textAlign: 'center',
     borderRadius: 15,
-    backgroundColor: '#D3D3D3',
     justifyContent: 'space-evenly',
     overflow: 'hidden'
-
   },
   graphHeader: {
     textAlign: 'center',

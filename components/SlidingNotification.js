@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState,  useImperativeHandle, forwardRef } from 'react';
-import { View, Text, StyleSheet, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Animated, ActivityIndicator } from '../platform';
 
 const SlidingNotification = (props, ref) => {
   const slideAnim = useRef(new Animated.Value(-160)).current;

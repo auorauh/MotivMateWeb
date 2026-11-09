@@ -1,7 +1,7 @@
 import { useEffect,useState } from 'react';
-import { StyleSheet, View, FlatList, Button, Image, Text} from 'react-native';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import Pressable from 'react-native/Libraries/Components/Pressable/Pressable';
+import { StyleSheet, View, FlatList, Button, Image, Text} from '../platform';
+import FontAwesome5 from '../platform/icons';
+import { Pressable } from '../platform';
 
 export default function AddGoalButton(props) {
 

@@ -1,9 +1,9 @@
-import { StyleSheet, View, TextInput, Text, Pressable, TouchableWithoutFeedback, Keyboard} from 'react-native';
+import { StyleSheet, View, TextInput, Text, Pressable, TouchableWithoutFeedback, Keyboard} from '../platform';
 import { useState,useEffect, useRef } from 'react';
 import axios from 'axios';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '../platform/icons';
 import SlidingNotification from './SlidingNotification';
-import {API_URL} from '@env';
+import {API_URL} from '../platform/env';
 import { getLocalData, saveLocalData } from '../functions/localDataUtility';
 
 function LoginPage({navigation}) {
@@ -73,7 +73,6 @@ function passCheck(user){
       navigation.navigate('Main', user);
     }
     else {
-      addPassHandler()
       setError('Password Email/Incorrect');
     }
 }
@@ -149,6 +148,7 @@ function closeCreation(){
                   onChangeText={passInputHandler}
                   value={pass} 
                   selectionColor={'#d4af37'}
+                  secureTextEntry
                   required
                 />
                 <Pressable style={styles.loginButton} onPress={login}><Text style={styles.fontSizeMed}>Login</Text></Pressable>
@@ -180,6 +180,7 @@ function closeCreation(){
                     onChangeText={passInputHandler}
                     value={pass} 
                     selectionColor={'#d4af37'}
+                    secureTextEntry
                     required
                   />
                   <Pressable style={styles.loginButton} onPress={createAccount}><Text style={styles.fontSizeMed}>Create  <FontAwesome5 style={styles.planeIcon} name={'paper-plane'} /></Text></Pressable>

@@ -1,90 +1,114 @@
-import { StyleSheet, View, Text} from 'react-native';
-import { useEffect,useState } from 'react';
+import { StyleSheet, View } from '../platform';
+import { useEffect, useState } from 'react';
 import TextFont from './TextFont';
+import HealthSection from './HealthSection';
 
 function UserPage(props) {
-  const [currentStreak, setStreak] = useState();
+  const [currentStreak, setStreak] = useState(0);
+  const dark = props.theme.background === '#0e1111';
+  const ink = dark ? '#fff9ef' : '#241f33';
+  const muted = dark ? 'rgba(255,249,239,0.62)' : '#6d6578';
+  const card = dark ? 'rgba(255,249,239,0.07)' : 'rgba(255,255,255,0.82)';
+  const line = dark ? 'rgba(255,249,239,0.14)' : 'rgba(36,31,51,0.08)';
+
   useEffect(() => {
-    findStreak();
-  }, []);
-
-  function findStreak(){
-    const streak = (props.goals).reduce((max, current) => {
+    const streak = (props.goals || []).reduce((max, current) => {
       return current.streak > max ? current.streak : max;
-    }, 0)
+    }, 0);
     setStreak(streak);
-  }
+  }, [props.goals]);
 
-    return (
-          <View style={[styles.userPage]}>
-          <TextFont style={[styles.title, {color:props.theme.secondary}]}>{props.userObj.name}</TextFont>
-            <View style={styles.userData}>
-              <View style={styles.column}>
-              <View style={[styles.userDataItem, {borderColor:props.theme.secondary}]}><TextFont style={[styles.medFontSize, {color:props.theme.secondary}]}>{props.userObj.hiScore}</TextFont><TextFont style={[styles.medFontTitle, {color:props.theme.secondary}]}>Daily Hi-Score</TextFont></View>
-              <View style={[styles.userDataItem, {borderColor:props.theme.secondary}]}><TextFont style={[styles.medFontSize, {color:props.theme.secondary}]}>{props.userObj.goalsCompleted}</TextFont><TextFont style={[styles.medFontTitle, {color:props.theme.secondary}]}>Goals Completed</TextFont></View>
-              <View style={[styles.userDataItem, {borderColor:props.theme.secondary}]}><TextFont style={[styles.medFontSize, {color:props.theme.secondary}]}>{currentStreak}</TextFont><TextFont style={[styles.medFontTitle, {color:props.theme.secondary}]}>Current Streak</TextFont></View>
-              <View style={[styles.userDataItem, {borderColor:props.theme.secondary}]}><TextFont style={[styles.medFontSize, {color:props.theme.secondary}]}>{props.userObj.perfectScore}</TextFont><TextFont style={[styles.medFontTitle, {color:props.theme.secondary}]}>Best Score</TextFont></View>
-              </View>
-              <View style={styles.column}>
-              <View style={[styles.userDataItem, {borderColor:props.theme.secondary}]}><TextFont style={[styles.medFontSize, {color:props.theme.secondary}]}>{props.userObj.motivRank}</TextFont><TextFont style={[styles.medFontTitle, {color:props.theme.secondary}]}>MotivRank</TextFont></View>
-              <View style={[styles.userDataItem, {borderColor:props.theme.secondary}]}><TextFont style={[styles.medFontSize, {color:props.theme.secondary}]}>{props.userObj.totalScore}</TextFont><TextFont style={[styles.medFontTitle, {color:props.theme.secondary}]}>Total Score</TextFont></View>
-              <View style={[styles.userDataItem, {borderColor:props.theme.secondary}]}><TextFont style={[styles.medFontSize, {color:props.theme.secondary}]}>{props.userObj.name}</TextFont><TextFont style={[styles.medFontTitle, {color:props.theme.secondary}]}>Name</TextFont></View>
-              <View style={[styles.userDataItem, {borderColor:props.theme.secondary}]}><TextFont style={[styles.smFontSize, {color:props.theme.secondary}]}>{props.userObj.email}</TextFont><TextFont style={[styles.medFontTitle, {color:props.theme.secondary}]}>Email</TextFont></View>
-              </View>
-            </View>
+  const stats = [
+    { label: 'Daily hi-score', value: props.userObj.hiScore ?? 0 },
+    { label: 'Best score', value: props.userObj.perfectScore ?? 0 },
+    { label: 'Total score', value: props.userObj.totalScore ?? 0 },
+    { label: 'Goals done', value: props.userObj.goalsCompleted ?? 0 },
+    { label: 'Current streak', value: currentStreak },
+    { label: 'MotivRank', value: props.userObj.motivRank ?? 0 },
+  ];
+
+  return (
+    <View style={styles.userPage}>
+      <View style={styles.header}>
+        <TextFont style={[styles.name, { color: ink }]}>{props.userObj.name}</TextFont>
+        <TextFont style={[styles.email, { color: muted }]}>{props.userObj.email}</TextFont>
+      </View>
+
+      <TextFont style={[styles.sectionLabel, { color: muted }]}>Overview</TextFont>
+      <View style={styles.grid}>
+        {stats.map((stat) => (
+          <View key={stat.label} style={[styles.stat, { backgroundColor: card, borderColor: line }]}>
+            <TextFont style={[styles.statValue, { color: ink }]}>{stat.value}</TextFont>
+            <TextFont style={[styles.statLabel, { color: muted }]}>{stat.label}</TextFont>
           </View>
-      );
-};
+        ))}
+      </View>
+
+      <HealthSection
+        userObj={props.userObj}
+        theme={props.theme}
+        ink={ink}
+        muted={muted}
+        card={card}
+        line={line}
+      />
+    </View>
+  );
+}
 
 export default UserPage;
 
 const styles = StyleSheet.create({
   userPage: {
-    height: '100%',
-    flex: 1,
+    width: '100%',
+    paddingTop: 28,
+    paddingBottom: 160,
     alignItems: 'center',
   },
-  userIcon: {
-    fontSize: 100,
-    color: '#00bcd4',
-    alignSelf: 'center'
+  header: {
+    width: '88%',
+    alignItems: 'center',
+    marginBottom: 28,
   },
-  title: {
-    fontSize: 30,
-    fontWeight: 500,
-    paddingTop: '5%'
+  name: {
+    fontSize: 34,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
-  userData: {
-    width: '90%',
-    paddingTop: 40,
+  email: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  sectionLabel: {
+    width: '88%',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  grid: {
+    width: '88%',
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  column: {
-    width: '45%',
-    marginRight: '10%',
-  },
-  userDataItem: {
-    height: 72,
-    width: '100%',
+  stat: {
+    width: '48%',
     borderWidth: 1,
-    borderRadius: 15,
-    marginBottom: 5,
-    justifyContent: 'center',
+    borderRadius: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    paddingLeft: 14,
+    paddingRight: 14,
+    marginBottom: 12,
   },
-
-  medFontSize: {
-    fontSize: 17,
-    alignSelf: 'center',
-    fontWeight: 'bold',
+  statValue: {
+    fontSize: 26,
+    fontWeight: '600',
   },
-  smFontSize: {
-    margin: 1,
-    fontSize: 10,
-    alignSelf: 'center',
-    fontWeight: 'bold',
-  },
-  medFontTitle: {
+  statLabel: {
     fontSize: 13,
-    paddingLeft: 10,
+    marginTop: 2,
   },
-})
+});

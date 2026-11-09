@@ -1,6 +1,6 @@
-import { StyleSheet, View, Text, Pressable } from 'react-native';
+import { StyleSheet, View, Text, Pressable } from '../platform';
 import { useEffect, useState } from 'react';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '../platform/icons';
 import TextFont from './TextFont';
 
 function GoalItem(props){

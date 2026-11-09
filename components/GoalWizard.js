@@ -1,7 +1,7 @@
-import { View, TextInput, Button, StyleSheet, Pressable,Image, Keyboard, Animated, FlatList} from 'react-native';
+import { View, TextInput, Button, StyleSheet, Pressable, Keyboard, Animated, FlatList} from '../platform';
 import { useState, useRef, useEffect } from 'react'
 import TextFont from './TextFont';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '../platform/icons';
 import axios from 'axios';
 import {intro, step1,step2,step3,step4,step5,Finance,Health,Education,Work,Social,Personal } from '../functions/wizardHelper';
 
@@ -139,7 +139,7 @@ function GoalWizard(props) {
     return (
       <View style={[styles.inputContainer]}>
         <TextFont style={[styles.headerText , {color:props.userObj.theme.secondary}]}>{header}</TextFont>
-        {stage ==0 ? <Image style={styles.wizardLogo} source={require('../assets/WizardIcon.png')}></Image>: <></>}
+        {stage ==0 ? <View style={styles.wizardLogo}><TextFont style={styles.wizardMark}>Wizard</TextFont></View>: <></>}
         <TextFont style={[styles.headerSubText, {color:props.userObj.theme.secondary}]}>{subHeader} {stage == 3 ? goalHelperText + ' Target?' : null}</TextFont>
         {stage > 2 ? <View style={[styles.goalItem, {backgroundColor: props.userObj.theme.primary}]}>
           <View style={styles.moveIcon}>
@@ -212,9 +212,15 @@ const styles = StyleSheet.create({
         justifyContent: 'space-evenly',
       },
       wizardLogo: {
-        resizeMode: 'contain',
         width: '100%',
-        height: '25%'
+        height: '25%',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+      wizardMark: {
+        fontSize: 42,
+        textAlign: 'center',
+        color: 'gray',
       },
       headerText: {
         fontSize: 30,

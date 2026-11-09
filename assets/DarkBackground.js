@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { SvgXml } from 'react-native-svg';
+import { SvgXml } from '../platform/svg';
 
 const xmlString = `
-<svg xmlns='http://www.w3.org/2000/svg' width='900' height='1080' viewBox='70 75 900 900'>
-  <rect fill='#0E1111' width='1080' height='900'/>
+<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' viewBox='70 75 900 900' preserveAspectRatio='xMidYMid slice'>
+  <rect fill='#0E1111' x='0' y='0' width='1200' height='1200'/>
   <g fill-opacity='0.04'>
     <polygon fill='#444' points='90 150 0 300 180 300'/>
     <polygon points='90 150 180 0 0 0'/>
@@ -78,4 +78,9 @@ const xmlString = `
 </svg>
 `;
 
-export default () => <SvgXml xml={xmlString} width='900' height='1080' style={{ position: 'absolute', zIndex: -1 }}/>;
+export default () => (
+  <SvgXml
+    xml={xmlString}
+    style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%', zIndex: -1 }}
+  />
+);

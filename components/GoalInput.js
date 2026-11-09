@@ -1,7 +1,7 @@
-import { View, TextInput, Button, StyleSheet, Modal, Pressable,TouchableWithoutFeedback, Keyboard, Animated, ActivityIndicator} from 'react-native';
+import { View, TextInput, Button, StyleSheet, Modal, Pressable,TouchableWithoutFeedback, Keyboard, Animated, ActivityIndicator} from '../platform';
 import { useState, useRef, useEffect } from 'react'
 import GoalWizard from './GoalWizard';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '../platform/icons';
 import axios from 'axios';
 import BackgroundSVG from '../assets/BackgroundSVG';
 import DarkBackground from '../assets/DarkBackground';

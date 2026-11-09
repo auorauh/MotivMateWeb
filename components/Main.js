@@ -1,16 +1,15 @@
 import { useEffect, useState, useRef} from 'react';
-import { StyleSheet, View, Image, Text, AppState, Keyboard,} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { useNavigation } from '@react-navigation/native';
+import { StyleSheet, View, Image, Text, AppState, Keyboard,} from '../platform';
+import { StatusBar } from '../platform/status-bar';
+import { useNavigation } from '../platform/navigation';
 import Nav from './Nav';
 import GoalList from './GoalList';
 import TextFont from './TextFont'
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '../platform/icons';
 import axios from 'axios';
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
-import storage from "@react-native-async-storage/async-storage";
-import {API_URL} from '@env';
+import * as Notifications from '../platform/notifications';
+import storage from "../platform/storage";
+import {API_URL} from '../platform/env';
 import { blue } from '../functions/colors'
 import BackgroundSVG from '../assets/BackgroundSVG';
 import DarkBackground from '../assets/DarkBackground';
@@ -24,7 +23,7 @@ Notifications.setNotificationHandler({
 });
 
 export default function App( {route} ) {
-  const [component, setComponent] = useState(goalList)
+  const [component, setComponent] = useState(null)
   const [notification, setNotification] = useState(false);
   const notificationListener = useRef();
   const responseListener = useRef();
@@ -327,8 +326,9 @@ function completeGoal(_id) {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    minHeight: 0,
     paddingTop: 40,
-    height: '90%',
     width: '100%'
   },
   nav: {
@@ -355,7 +355,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   goalSection: {
-    height: '85%',
+    flex: 1,
+    minHeight: 0,
+    overflowY: 'auto',
   },
   nav: {
     height: '10%',

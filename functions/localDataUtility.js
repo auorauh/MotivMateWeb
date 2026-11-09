@@ -1,4 +1,4 @@
-import storage from "@react-native-async-storage/async-storage";
+import storage from "../platform/storage";
 
 export async function deleteLocalData(key) {
     try {

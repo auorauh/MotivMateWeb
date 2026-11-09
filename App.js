@@ -1,5 +1,5 @@
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {NavigationContainer} from './platform/navigation';
+import {createNativeStackNavigator} from './platform/navigation';
 import LoginPage from './components/LoginPage';
 import Main from './components/Main';
 

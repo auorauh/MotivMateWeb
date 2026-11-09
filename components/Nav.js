@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import { StyleSheet, View, Pressable} from 'react-native';
+import { StyleSheet, View, Pressable} from '../platform';
 import GoalList from './GoalList';
 import GoalInput from './GoalInput';
 import AddGoalButton from './AddGoalButton';
 import UserPage from './UserPage';
 import Settings from './settings';
 import AnalyticsPage from './analyticsPage';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '../platform/icons';
 
 export default function Nav(props) {
 
@@ -28,7 +28,7 @@ export default function Nav(props) {
   }
 
     return (
-        <View style={[styles.nav, {backgroundColor: props.theme.background}]}>
+        <View style={[styles.nav, {backgroundColor: props.theme.background, borderTopColor: props.theme.background}]}>
         {props.goalInput && <GoalInput API_URL={props.API_URL} userObj={props.userObj} onAddGoal={props.onAddGoal} cancel={props.cancel}/>}
                 
         <Pressable style={[styles.navItem]} onPress={goalList}>
@@ -55,7 +55,9 @@ export default function Nav(props) {
 }
 const styles = StyleSheet.create({
     nav: {
-        height: '10%',
+        height: 88,
+        marginTop: -1,
+        flexShrink: 0,
         width: '100%',
         flexDirection: 'row',
         justifyContent: 'space-around',

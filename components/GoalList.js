@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, FlatList, Pressable,TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, View, Text, FlatList, Pressable,TouchableWithoutFeedback } from '../platform';
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import GoalItem from './GoalItem';
 import TextFont from './TextFont';
@@ -8,17 +8,11 @@ const [list, setList] = useState(listTypes);
 
 function setSelection(type){
     props.setListType(type);
-    listTypes.forEach(element => {
-        element.selected = false;
+    const next = list.map((obj) => ({ ...obj, selected: obj.id === type.id }));
+    listTypes.forEach((element) => {
+        element.selected = element.id === type.id;
     });
-    list.map((obj) => {
-        if(obj.id === type.id){
-            return obj.selected = true;
-        } else {
-            return obj;
-        }
-    });
-    setList(list);
+    setList(next);
 }
 const [count, setCount] = useState(0);
 
@@ -32,12 +26,15 @@ useImperativeHandle(ref, () => ({
 return (
     <View>
         <View style={styles.listType}>
-            <FlatList showsVerticalScrollIndicator={false} horizontal={true}  data={list} renderItem={(item) => {
-        return <Pressable style={[item.item.selected ? [styles.listTypeItem,styles.selected] : [styles.listTypeItem]]} onPress={setSelection.bind(this,item.item)}><TextFont style={styles.listTypeText}>{item.item.listType}</TextFont></Pressable>
-        }}
-        keyExtractor={(item) => {
-            return item.id;
-    }}/>
+            {list.map((type) => (
+                <Pressable
+                    key={type.id}
+                    style={[styles.listTypeItem, type.selected ? styles.selected : null]}
+                    onPress={() => setSelection(type)}
+                >
+                    <TextFont style={styles.listTypeText}>{type.listType}</TextFont>
+                </Pressable>
+            ))}
         </View>
     <FlatList style={styles.goalSection} onRefresh={props.refresh} refreshing={props.refreshing} numColumns={1} data={props.userGoals} ItemSeparatorComponent={() => <View style={{ height: 15 }} />} renderItem={(itemData) => {
         return <GoalItem totalCount={props.userGoals.length} index={itemData.index} theme={props.userObj.theme} value={itemData.item} onDeleteItem={props.deleteGoal} _id={itemData.item._id} complete={props.completeGoal}/>;
@@ -54,18 +51,20 @@ export default forwardRef(GoalList);
 const styles = StyleSheet.create({
     listType: {
         width: '100%',
-        alignSelf: 'center'
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-evenly',
     },
     listTypeItem: {
-        fontSize: 25,
-        height: 30,
-        width: '100%',
+        flex: 1,
+        height: 36,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     listTypeText: {
-        width: '100%',
-        fontSize: 20, 
-        textAlign: 'center', 
-        color: 'gray'
+        fontSize: 20,
+        textAlign: 'center',
+        color: 'gray',
     },
     selected: {
         borderTopWidth: 2,
