@@ -1,11 +1,10 @@
 import { StyleSheet, View, Text, Pressable, Modal, Switch, Button, Animated, Vibration} from '../platform';
 import { useEffect, useState, useRef } from 'react'
 import FontAwesome5 from '../platform/icons';
-import * as Notifications from '../platform/notifications';
-import { getAllScheduledNotificationsAsync, cancelAllScheduledNotificationsAsync } from '../platform/notifications';
+import { currentPushSubscription, disablePush, enablePush } from '../platform/push';
 import axios from 'axios';
 import { useNavigation } from '../platform/navigation';
-import { getLocalData, saveLocalData, deleteLocalData } from '../functions/localDataUtility';
+import { deleteLocalData } from '../functions/localDataUtility';
 import { red, yellow, blue, lavender, dark, mint, peach, coral, sky, sage} from '../functions/colors';
 import TextFont from './TextFont';
 
@@ -51,7 +50,7 @@ function Settings(props) {
     setNewTheme(props.userObj.theme);
     setUserColor(props.userObj.theme.primary);
     checkForLocalNoties();
-  },[])
+  }, []);
 
 
   async function changeColor(color){
@@ -116,64 +115,26 @@ function Settings(props) {
     }
   }
   async function toggleNotifications(){
-    if(userNotifications){
-      //turn off notifications 
-      await cancelAllScheduledNotificationsAsync();
-      deleteLocalData('NotiesScheduled');
+    if (userNotifications) {
+      await disablePush(props.userObj.email);
       setUserNotifications(false);
-    } else {
-      //turn on
-      scheduleNotification();
+      return;
     }
-  }
-  async function scheduleNotification(){
-    await saveLocalData('NotiesScheduled',{scheduled: true});
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Be your best today!",
-        body: "Plan your day!",
-      },
-      trigger: {
-        hour: 7,
-        minute: 30,
-        repeats: true
-      }
-    });
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Update your MotivMate!",
-        body: "Mark your goals complete, see your score!",
-      },
-      trigger: {
-        hour: 14,
-        minute: 30,
-        repeats: true
-      }
-    });
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Dont lose your streak!",
-        body: "Beat your score yesterday!",
-        // data: { data: "data goes here" }
-      },
-      trigger: {
-        hour: 21,
-        minute: 30,
-        repeats: true
-      }
-    });
+    const result = await enablePush(props.userObj.email);
+    if (!result.ok) {
+      window.alert(result.message);
+      setUserNotifications(false);
+      return;
+    }
     setUserNotifications(true);
   }
   async function checkForLocalNoties(){
-  let noties;
-  try{
-    noties = await getLocalData('NotiesScheduled');
-    if(noties != null){
-      setUserNotifications(true);
+    try {
+      const subscription = await currentPushSubscription();
+      setUserNotifications(Boolean(subscription));
+    } catch {
+      setUserNotifications(false);
     }
-  }
-  catch (error){
-  }
   }
   const navigation = useNavigation();
   function logout(){
@@ -217,7 +178,7 @@ function Settings(props) {
               <View style={styles.settingSection}>
                 <View style={styles.toggleSection}>
                   <View style={styles.notifications}>
-                  <TextFont style={[{fontSize: 16}, {color:newTheme.secondary}]}>Notifications</TextFont>
+                  <TextFont style={[{fontSize: 16}, {color:newTheme.secondary}]}>Push reminders</TextFont>
                   <Switch
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={toggleNotifications}
