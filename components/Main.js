@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     minHeight: 0,
-    paddingTop: 40,
+    paddingTop: 16,
     width: '100%'
   },
   nav: {
@@ -342,17 +342,17 @@ const styles = StyleSheet.create({
     
   },
   userIcon: {
-    marginTop: '5%',
-    fontSize: 50,
+    marginTop: 8,
+    fontSize: 34,
     color: '#00bcd4',
     borderWidth:1,
     borderColor: 'lightgray',
-    borderRadius: 25
+    borderRadius: 17
   },
   scoreText: {
     color: 'grey',
-    marginBottom: 20,
-    fontSize: 20,
+    marginBottom: 8,
+    fontSize: 16,
   },
   goalSection: {
     flex: 1,
