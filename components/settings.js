@@ -1,7 +1,7 @@
 import { StyleSheet, View, Text, Pressable, Modal, Switch, Button, Animated, Vibration} from '../platform';
 import { useEffect, useState, useRef } from 'react'
 import FontAwesome5 from '../platform/icons';
-import { currentPushSubscription, disablePush, enablePush, sendTestPush } from '../platform/push';
+import { currentPushSubscription, disablePush, enablePush } from '../platform/push';
 import axios from 'axios';
 import { useNavigation } from '../platform/navigation';
 import { deleteLocalData } from '../functions/localDataUtility';
@@ -45,7 +45,6 @@ function Settings(props) {
   const [userColor, setUserColor] = useState('#00bcd4');
   const [newTheme, setNewTheme] = useState(blue);
   const [userNotifications, setUserNotifications] = useState(false);
-  const [pushNote, setPushNote] = useState('');
 
   useEffect(() => {
     setNewTheme(props.userObj.theme);
@@ -129,11 +128,6 @@ function Settings(props) {
     }
     setUserNotifications(true);
   }
-  async function testPush() {
-    setPushNote('Sending…');
-    const result = await sendTestPush(props.userObj.email);
-    setPushNote(result.message);
-  }
   async function checkForLocalNoties(){
     try {
       const subscription = await currentPushSubscription();
@@ -191,12 +185,6 @@ function Settings(props) {
                   value={userNotifications}
                   />
                   </View>
-                  {userNotifications ? (
-                    <Pressable style={styles.testPush} onPress={testPush}>
-                      <TextFont style={[{ fontSize: 16 }, { color: newTheme.secondary }]}>Test push</TextFont>
-                    </Pressable>
-                  ) : null}
-                  {pushNote ? <TextFont style={styles.pushNote}>{pushNote}</TextFont> : null}
                   </View>
               </View>
               <View style={styles.settingSection}>
@@ -301,22 +289,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     marginTop: '5%'
-  },
-  testPush: {
-    borderRadius: 15,
-    borderWidth: 2,
-    height: 44,
-    width: 250,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  pushNote: {
-    width: 250,
-    marginTop: 8,
-    fontSize: 13,
-    color: 'gray',
-    textAlign: 'center',
   },
   reset: {
     borderRadius: 15,

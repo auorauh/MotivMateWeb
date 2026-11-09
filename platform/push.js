@@ -51,16 +51,6 @@ export async function enablePush(email) {
   return { ok: true };
 }
 
-export async function sendTestPush(email) {
-  const response = await fetch(`${API_URL}/api/push/test`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
-  });
-  const data = await response.json().catch(() => ({}));
-  return { ok: response.ok, message: data.message || 'Test push failed.' };
-}
-
 export async function disablePush(email) {
   const subscription = await currentPushSubscription();
   if (subscription) await subscription.unsubscribe();
