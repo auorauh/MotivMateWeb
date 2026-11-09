@@ -93,14 +93,21 @@ function GoalInput(props) {
         
       }
     }
-    function createWizardGoal(goal){
-      setGoalWizard(false);
-      setGoalText(goal.title);
-      setType(goal.type);
-      setLevel(goal.diff);
-    }
-    async function wizardGoal(){
-      await postGoal();
+    function saveWizardGoal(goal) {
+      const payload = {
+        owner: props.userObj._id,
+        title: goal.title,
+        complete: false,
+        type: goal.type,
+        difficulty: goal.diff,
+        timesCompleted: 0,
+      };
+      return axios.post(`${props.API_URL}/api/goals`, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      }).then((res) => {
+        props.onAddGoal(res.data);
+        props.cancel();
+      });
     }
 
     return (
@@ -109,14 +116,22 @@ function GoalInput(props) {
           {goalWizard==undefined ?
           <View style={[styles.wizardContainer, {backgroundColor:props.userObj.theme.background}]}>
           {props.userObj.theme.background != '#0e1111' ?  <BackgroundSVG/> : <DarkBackground/>}
-            <Pressable style={[styles.wizardButton,{backgroundColor:props.userObj.theme.primary}]} onPress={() => toggleGoalWizard(true)}><TextFont style={styles.wizardText}>Goal Wizard </TextFont><TextFont><FontAwesome5 style={styles.wizardIcon} name={'magic'} /> </TextFont></Pressable>
-            <Pressable style={[styles.wizardButton,{backgroundColor:props.userObj.theme.primary}]} onPress={() => toggleGoalWizard(false)}><TextFont style={styles.wizardText}>Custom goal</TextFont><TextFont><FontAwesome5 style={styles.wizardIcon} name={'list-alt'} /> </TextFont></Pressable>
-            <Pressable style={[styles.wizardButton,{backgroundColor:props.userObj.theme.primary}]} onPress={props.cancel}><TextFont style={styles.exitText}>Cancel</TextFont></Pressable>
+            <Pressable style={[styles.wizardButton,{backgroundColor:props.userObj.theme.primary}]} onPress={() => toggleGoalWizard(true)}>
+              <FontAwesome5 style={styles.wizardIcon} name={'magic'} />
+              <TextFont style={styles.wizardText}>Goal Wizard</TextFont>
+            </Pressable>
+            <Pressable style={[styles.wizardButton,{backgroundColor:props.userObj.theme.primary}]} onPress={() => toggleGoalWizard(false)}>
+              <FontAwesome5 style={styles.wizardIcon} name={'list-alt'} />
+              <TextFont style={styles.wizardText}>Custom goal</TextFont>
+            </Pressable>
+            <Pressable style={[styles.wizardButton, styles.cancelChoice]} onPress={props.cancel}>
+              <TextFont style={styles.exitText}>Cancel</TextFont>
+            </Pressable>
           </View>
           : 
             <View style={[styles.inputContainer, {backgroundColor:props.userObj.theme.background}]}>
               {props.userObj.theme.background != '#0e1111' ?  <BackgroundSVG/> : <DarkBackground/>}
-                        {goalWizard==true ? <GoalWizard userObj={props.userObj} close={createWizardGoal}/> :
+                        {goalWizard==true ? <GoalWizard userObj={props.userObj} onExit={() => setGoalWizard(undefined)} onCreate={saveWizardGoal}/> :
   <View style={styles.goalContainer}>
             <View style={styles.goalSection}>
               <TextFont style={styles.subText}>Goal Title</TextFont>
@@ -189,17 +204,18 @@ function GoalInput(props) {
 export default GoalInput;
 
 const styles = StyleSheet.create({
-    inputContainer: {
-        padding: 16,
-        flex: 1,
+      inputContainer: {
+        height: '100%',
+        width: '100%',
+        justifyContent: 'center',
+        padding: 24,
       },
       goalContainer: {
-        height: '95%',
-        marginTop: '10%',
-        justifyContent: 'space-evenly'
+        width: '100%',
+        gap: 28,
       },
       goalSection: {
-        marginTop: '15%',
+        width: '100%',
         alignItems: 'center',
       },
       textInput: {
@@ -207,36 +223,37 @@ const styles = StyleSheet.create({
         borderBottomColor: 'gray',
         backgroundColor: '#DDD',
         borderRadius: 15,
-        width: '94%',
-        padding: 8,
+        width: '100%',
+        padding: 12,
         color: '#666',
-        fontSize: 30,
-
+        fontSize: 18,
       },
       types: {
         flexDirection: 'row',
-        gap: 10,
-        height: 100,
-        justifyContent: 'space-evenly'
+        gap: 12,
+        width: '100%',
+        justifyContent: 'center',
       },
       typeChoice: {
         borderWidth: 2,
         borderColor: 'gray',
-        width: '45%',
+        flex: 1,
+        height: 56,
+        flexDirection: 'row',
+        gap: 8,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 20,
-        marginBottom: 10
+        borderRadius: 16,
       },
       typeText: {
         color: 'gray',
-        fontSize: 18,
+        fontSize: 16,
       },
       subText: {
-        fontSize: 27,
+        fontSize: 22,
         fontWeight: 900,
         color: 'gray',
-        marginBottom: 10
+        marginBottom: 10,
       },
       dailySelected: {
         //color: '#FFC107',
@@ -250,30 +267,31 @@ const styles = StyleSheet.create({
       difficulty: {
         borderWidth: 2,
         borderColor: 'gray',
-        width: '30%',
+        flex: 1,
+        height: 48,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 20,
+        borderRadius: 16,
       },
       buttonContainer: {
         flexDirection: 'row',
-        marginBottom: '25%'
+        gap: 12,
+        width: '100%',
       },
       button: {
-        marginHorizontal: 8,
         borderWidth: 2,
         borderColor: 'gray',
-        width: '46%',
-        borderRadius: 20,
+        flex: 1,
+        height: 52,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
       },
       addBtn: {
-        height: 100,
+        height: '100%',
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        
       },
       easy: {
         color: '#58cc02',
@@ -300,41 +318,40 @@ const styles = StyleSheet.create({
         //...StyleSheet.absoluteFill,
       },
       wizardContainer: {
-        flex: 1,
-        justifyContent: 'space-evenly',
+        height: '100%',
+        width: '100%',
+        justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: '15%',
+        gap: 16,
+        padding: 24,
       },
       wizardButton: {
         borderWidth: 2,
         borderColor: 'gray',
-        borderRadius: 15,
-        width: '50%',
-        height: '15%',
+        borderRadius: 16,
+        width: '100%',
+        flexDirection: 'row',
+        gap: 12,
+        paddingTop: 18,
+        paddingBottom: 18,
         justifyContent: 'center',
-        alignItems:'center',
-        
+        alignItems: 'center',
+        flexShrink: 0,
       },
       wizardText: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
-        paddingBottom: 10
       },
       wizardIcon: {
-        fontSize: 30
+        fontSize: 22,
       },
-      exit: {
-        width: '100%',
-        borderWidth: 1,
-        height: '15%',
-        padding: 27,
-        backgroundColor: 'gray',
-        opacity: .5
+      cancelChoice: {
+        backgroundColor: 'transparent',
       },
       exitText: {
         color: 'gray',
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
-        textAlign: 'center'
+        textAlign: 'center',
       }
 })

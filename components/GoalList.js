@@ -5,6 +5,15 @@ import TextFont from './TextFont';
 
 function GoalList(props, ref) {
 const [list, setList] = useState(listTypes);
+const [dropSlot, setDropSlot] = useState(null);
+
+function hoverSlot(slot) {
+    setDropSlot((current) => {
+        if (!slot && !current) return current;
+        if (slot && current && slot.id === current.id && slot.before === current.before) return current;
+        return slot;
+    });
+}
 
 function setSelection(type){
     props.setListType(type);
@@ -37,7 +46,7 @@ return (
             ))}
         </View>
     <FlatList style={styles.goalSection} onRefresh={props.refresh} refreshing={props.refreshing} numColumns={1} data={props.userGoals} ItemSeparatorComponent={() => <View style={{ height: 15 }} />} renderItem={(itemData) => {
-        return <GoalItem totalCount={props.userGoals.length} index={itemData.index} theme={props.userObj.theme} value={itemData.item} onDeleteItem={props.deleteGoal} _id={itemData.item._id} complete={props.completeGoal}/>;
+        return <GoalItem totalCount={props.userGoals.length} index={itemData.index} theme={props.userObj.theme} value={itemData.item} onDeleteItem={props.deleteGoal} _id={itemData.item._id} complete={props.completeGoal} dropBefore={dropSlot && dropSlot.id === itemData.item._id && dropSlot.before} dropAfter={dropSlot && dropSlot.id === itemData.item._id && !dropSlot.before} onDragHover={hoverSlot} onReorder={props.onReorder}/>;
         }}
         keyExtractor={(item) => {
             return item._id;

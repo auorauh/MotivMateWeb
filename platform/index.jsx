@@ -106,6 +106,7 @@ export function Pressable({
   onPressOut,
   disabled,
   children,
+  ...rest
 }) {
   const [pressed, setPressed] = useState(false);
   const timer = useRef(null);
@@ -119,6 +120,7 @@ export function Pressable({
 
   return (
     <div
+      {...domProps(rest)}
       role="button"
       aria-disabled={disabled || undefined}
       style={{

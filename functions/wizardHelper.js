@@ -33,7 +33,7 @@ export const Education = {
     content: ['Practice', 'Study', 'Enroll', 'Complete', 'Learn', 'Research']
 }
 export const Work = {
-    content: ['Apply', 'Finish', 'Review', 'Investigate', 'Conact', 'Collaborate']
+    content: ['Apply', 'Finish', 'Review', 'Investigate', 'Contact', 'Collaborate']
 }
 export const Personal = {
     content: ['Journal', 'Chores', 'Read', 'Quit', 'Limit', 'Plan']

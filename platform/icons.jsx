@@ -9,6 +9,7 @@ import {
   FaPaperPlane,
   FaPlus,
   FaPlusSquare,
+  FaTrash,
   FaUser,
   FaUserCircle,
 } from 'react-icons/fa';
@@ -27,6 +28,7 @@ const ICONS = {
   'list-alt': FaListAlt,
   history: FaHistory,
   plus: FaPlus,
+  trash: FaTrash,
 };
 
 export default function FontAwesome5({ name, style }) {

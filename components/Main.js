@@ -40,7 +40,7 @@ export default function App( {route} ) {
   const [lastOpenDate, setLastOpenDate] = useState(null);
   const [childKey, setChildKey] = useState(1);
   const childRef = useRef(null);
-  const goalList = <GoalList API_URL={API_URL} ref={childRef} userObj={route.params} refresh={refresh} refreshing={refreshing} userGoals={userGoals} completeGoal={completeGoal} deleteGoal={deleteGoal} setListType={setListType}/>;
+  const goalList = <GoalList API_URL={API_URL} ref={childRef} userObj={route.params} refresh={refresh} refreshing={refreshing} userGoals={userGoals} completeGoal={completeGoal} deleteGoal={deleteGoal} setListType={setListType} onReorder={reorderGoals}/>;
 
   const updateKey = () => {
     // Generate a new unique key for the child component to re-render on change
@@ -134,8 +134,9 @@ async function getGoals(_id) {
     })
       .then(function (response) {
         if(response.data){
-          setUserGoals(response.data);
-          sortGoals(response.data);
+          const ordered = sortByOrder(response.data);
+          setUserGoals(ordered);
+          sortGoals(ordered);
           updateKey();
         }
       })
@@ -256,7 +257,41 @@ function completeGoal(_id) {
     }
     return userScore;
   }
-  function sortGoals(goals){
+  function sortByOrder(goals) {
+  return [...goals].sort((a, b) => {
+    const ao = a.order;
+    const bo = b.order;
+    if (ao == null && bo == null) return 0;
+    if (ao == null) return 1;
+    if (bo == null) return -1;
+    return ao - bo;
+  });
+}
+function reorderGoals(fromId, toId, before) {
+  if (!fromId || !toId) return;
+  const visibleIds = new Set(userGoals.map((goal) => goal._id));
+  const full = allGoals.length ? [...allGoals] : [...userGoals];
+  const visible = full.filter((goal) => visibleIds.has(goal._id));
+  const from = visible.findIndex((goal) => goal._id === fromId);
+  if (from < 0 || visible.findIndex((goal) => goal._id === toId) < 0) return;
+  const [moved] = visible.splice(from, 1);
+  let insertAt = visible.findIndex((goal) => goal._id === toId);
+  if (!before) insertAt += 1;
+  if (insertAt === from) return;
+  visible.splice(insertAt, 0, moved);
+  let nextVisible = 0;
+  const next = full.map((goal) => (visibleIds.has(goal._id) ? visible[nextVisible++] : goal))
+    .map((goal, index) => ({ ...goal, order: index }));
+  sortGoals(next);
+  setUserGoals(next.filter((goal) => visibleIds.has(goal._id)));
+  updateKey();
+  next.forEach((goal) => {
+    axios.put(`${API_URL}/api/users/goals/${goal._id}`, goal).catch((error) => {
+      console.log('.put /goals order ERROR', error);
+    });
+  });
+}
+function sortGoals(goals){
     setAllGoals(goals.filter(goal => goal));
     setDailyGoals(goals.filter(goal => goal.type === 'daily'));
     setGroupGoals(goals.filter(goal => goal.type === 'group'));
