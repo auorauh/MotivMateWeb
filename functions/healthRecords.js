@@ -9,10 +9,14 @@ export const HEALTH_RECORDS = [
 
 export function mergeHealth(saved) {
   const byId = new Map((saved || []).map((item) => [item.id, item]));
-  return HEALTH_RECORDS.map((record) => ({
-    ...record,
-    value: byId.get(record.id)?.value ?? null,
-  }));
+  return HEALTH_RECORDS.map((record) => {
+    const saved = byId.get(record.id);
+    return {
+      ...record,
+      value: saved?.value ?? null,
+      previous: saved?.previous ?? null,
+    };
+  });
 }
 
 export function isBetter(record, next, current) {
@@ -20,10 +24,12 @@ export function isBetter(record, next, current) {
   return record.better === 'lower' ? next < current : next > current;
 }
 
+export function formatValue(value, unit) {
+  const shown = Number.isInteger(value) ? value.toLocaleString() : value;
+  return `${shown} ${unit}`;
+}
+
 export function formatRecord(record) {
   if (record.value == null) return 'No record yet';
-  const shown = Number.isInteger(record.value)
-    ? record.value.toLocaleString()
-    : record.value;
-  return `${shown} ${record.unit}`;
+  return formatValue(record.value, record.unit);
 }

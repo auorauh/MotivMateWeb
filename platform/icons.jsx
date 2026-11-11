@@ -1,5 +1,6 @@
 import {
   FaAlignRight,
+  FaChevronRight,
   FaCog,
   FaFireAlt,
   FaGripLines,
@@ -19,6 +20,7 @@ const ICONS = {
   'user-circle': FaUserCircle,
   'plus-square': FaPlusSquare,
   'align-right': FaAlignRight,
+  'chevron-right': FaChevronRight,
   user: FaUser,
   cog: FaCog,
   'paper-plane': FaPaperPlane,

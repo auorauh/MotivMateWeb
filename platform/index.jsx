@@ -245,11 +245,10 @@ export function ActivityIndicator({ color = '#111', size = 'small' }) {
   );
 }
 
-export function Modal({ children, animationType }) {
+export function Modal({ children, animationType, className }) {
+  const names = [animationType === 'slide' ? 'mm-modal mm-modal-slide' : 'mm-modal', className].filter(Boolean);
   return (
-    <div
-      className={animationType === 'slide' ? 'mm-modal mm-modal-slide' : 'mm-modal'}
-    >
+    <div className={names.join(' ')}>
       {children}
     </div>
   );

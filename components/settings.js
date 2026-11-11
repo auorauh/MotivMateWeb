@@ -106,10 +106,10 @@ function Settings(props) {
     props.setTheme(newValue);
   };
   async function saveTheme(theme){
-    props.userObj.theme = theme;
+    const next = { ...props.userObj, theme };
     setTheme(theme);
     try {
-      const response = await axios.put(`${props.API_URL}/api/users/${props.userObj.email}`, props.userObj);
+      const response = await axios.put(`${props.API_URL}/api/users/${next.email}`, next);
       return response.data;
     } catch (error) {
     }
@@ -152,6 +152,13 @@ function Settings(props) {
     }
   }
 
+    const isDark = newTheme.background === '#0e1111';
+    const ink = isDark ? '#fff9ef' : '#241f33';
+    const muted = isDark ? 'rgba(255,249,239,0.62)' : '#6d6578';
+    const line = isDark ? 'rgba(255,249,239,0.45)' : 'rgba(36,31,51,0.28)';
+    const card = isDark ? 'rgba(255,249,239,0.07)' : 'transparent';
+    const swatchBorder = isDark ? 'rgba(255,249,239,0.55)' : 'rgba(36,31,51,0.22)';
+
     return (
           <View style={[styles.settingPage]}>
             <View style={styles.header}>
@@ -159,25 +166,24 @@ function Settings(props) {
             <View style={styles.userData}>
             <TextFont style={[styles.title, {color:newTheme.secondary}]}>Choose your color</TextFont>
               <View style={styles.colorTray}>
-                <Pressable style={[styles.red, styles.color]} onPress={() =>changeColor( red )}></Pressable>
-                <Pressable style={[styles.yellow, styles.color]} onPress={() =>changeColor( yellow )}></Pressable>
-                <Pressable style={[styles.blue, styles.color]} onPress={() =>changeColor( blue )}></Pressable>
-                <Pressable style={[styles.lavender, styles.color]} onPress={() =>changeColor( lavender )}></Pressable>
-                <Pressable style={[styles.dark, styles.color]} onPress={() =>changeColor( dark )}></Pressable>
-                <Pressable style={[styles.coral, styles.color]} onPress={() =>changeColor( coral )}></Pressable>
-                <Pressable style={[styles.peach, styles.color]} onPress={() =>changeColor( peach )}></Pressable>
-                <Pressable style={[styles.sage, styles.color]} onPress={() =>changeColor( sage )}></Pressable>
-                <Pressable style={[styles.sky, styles.color]} onPress={() =>changeColor( sky )}></Pressable>
-                <Pressable style={[styles.mint, styles.color]} onPress={() =>changeColor( mint )}></Pressable>
+                <Pressable style={[styles.red, styles.color, { borderColor: swatchBorder }]} onPress={() =>changeColor( red )}></Pressable>
+                <Pressable style={[styles.yellow, styles.color, { borderColor: swatchBorder }]} onPress={() =>changeColor( yellow )}></Pressable>
+                <Pressable style={[styles.blue, styles.color, { borderColor: swatchBorder }]} onPress={() =>changeColor( blue )}></Pressable>
+                <Pressable style={[styles.lavender, styles.color, { borderColor: swatchBorder }]} onPress={() =>changeColor( lavender )}></Pressable>
+                <Pressable style={[styles.dark, styles.color, { borderColor: '#fff9ef' }]} onPress={() =>changeColor( dark )}></Pressable>
+                <Pressable style={[styles.coral, styles.color, { borderColor: swatchBorder }]} onPress={() =>changeColor( coral )}></Pressable>
+                <Pressable style={[styles.peach, styles.color, { borderColor: swatchBorder }]} onPress={() =>changeColor( peach )}></Pressable>
+                <Pressable style={[styles.sage, styles.color, { borderColor: swatchBorder }]} onPress={() =>changeColor( sage )}></Pressable>
+                <Pressable style={[styles.sky, styles.color, { borderColor: swatchBorder }]} onPress={() =>changeColor( sky )}></Pressable>
+                <Pressable style={[styles.mint, styles.color, { borderColor: swatchBorder }]} onPress={() =>changeColor( mint )}></Pressable>
               </View>
               <View style={styles.settingSection}>
-                <TextFont>Tap to Complete Goals</TextFont>
-                <TextFont>&</TextFont>
-                <TextFont>Hold to Delete Goals</TextFont>
+                <TextFont style={{ color: muted }}>Tap to complete a goal</TextFont>
+                <TextFont style={{ color: muted }}>Slide left to delete</TextFont>
               </View>
               <View style={styles.settingSection}>
                 <View style={styles.toggleSection}>
-                  <View style={styles.notifications}>
+                  <View style={[styles.notifications, { borderColor: line, backgroundColor: card }]}>
                   <TextFont style={[{fontSize: 16}, {color:newTheme.secondary}]}>Push reminders</TextFont>
                   <Switch
                   ios_backgroundColor="#3e3e3e"
@@ -188,10 +194,10 @@ function Settings(props) {
                   </View>
               </View>
               <View style={styles.settingSection}>
-                <Pressable style={styles.reset}
+                <Pressable style={[styles.reset, { borderColor: line, backgroundColor: card }]}
                 onPressIn={startReset}
                 onPressOut={cancelReset}>
-                  <TextFont style={styles.resetText}>Reset Score (Hold)</TextFont>
+                  <TextFont style={[styles.resetText, { color: ink }]}>Reset Score (Hold)</TextFont>
                       <Animated.View
                       style={[
                         styles.box,
@@ -201,7 +207,7 @@ function Settings(props) {
                   </Pressable>
               </View>
               <View style={styles.settingSection}></View>
-              <View style={styles.logout}>
+              <View style={[styles.logout, { backgroundColor: card }]}>
               <Button color="red" title="Log Out" onPress={logout}></Button>
               </View>
             </View>

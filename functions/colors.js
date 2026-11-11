@@ -30,7 +30,7 @@ export  const dark = {
   };
   
   export const peach = {
-    primary: '#FFDAB9', // light peach
+    primary: '#F3D5BC',
     secondary: 'black',
     background: '#fff9ef'
   };

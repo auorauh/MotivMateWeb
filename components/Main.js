@@ -40,7 +40,7 @@ export default function App( {route} ) {
   const [lastOpenDate, setLastOpenDate] = useState(null);
   const [childKey, setChildKey] = useState(1);
   const childRef = useRef(null);
-  const goalList = <GoalList API_URL={API_URL} ref={childRef} userObj={route.params} refresh={refresh} refreshing={refreshing} userGoals={userGoals} completeGoal={completeGoal} deleteGoal={deleteGoal} setListType={setListType} onReorder={reorderGoals}/>;
+  const goalList = <GoalList API_URL={API_URL} ref={childRef} userObj={userObj} theme={theme} refresh={refresh} refreshing={refreshing} userGoals={userGoals} completeGoal={completeGoal} deleteGoal={deleteGoal} setListType={setListType} onReorder={reorderGoals}/>;
 
   const updateKey = () => {
     // Generate a new unique key for the child component to re-render on change
@@ -146,11 +146,9 @@ async function getGoals(_id) {
       setTimeout(() => {
       }, 0);
 }
-const updateTheme = (theme) => {
-  setTheme(theme);
-  userObj.userGoals = userObj.userGoals;
-  //refresh();
-  updateKey();
+function applyTheme(nextTheme) {
+  setTheme(nextTheme);
+  setuserObj((current) => ({ ...current, theme: nextTheme }));
 }
 function startAddGoal(){
   setGoalModal(true);
@@ -219,43 +217,41 @@ function completeGoal(_id) {
 }
 
 
-    async function deleteGoal(_id){
-    let goal = userGoals.filter((goal) => goal._id == _id)[0];
-    userObj.dailyScore = adjustPoints(goal);
+  async function deleteGoal(_id) {
+    const goal = userGoals.find((item) => item._id === _id);
+    if (!goal) return;
+    const wasComplete = goal.complete === true;
+    const remaining = userGoals.filter((item) => item._id !== _id);
+    if (wasComplete) {
+      let nextScore = 0;
+      remaining.forEach((item) => {
+        if (item.complete === true) {
+          switch (item.difficulty) {
+            case 'Easy':
+              nextScore += 10;
+              break;
+            case 'Medium':
+              nextScore += 25;
+              break;
+            case 'Hard':
+              nextScore += 100;
+              break;
+          }
+        }
+      });
+      userObj.dailyScore = nextScore;
+      setScore(nextScore);
+    }
     try {
       await axios.delete(`${API_URL}/api/users/goals/${goal._id}`);
-      if(goal.complete = true){
-        try{
-          await axios.put(`${API_URL}/api/users/${userObj._id}`, userObj);
-        } catch(err){
-          console.log('.put /users/_id ERROR',err)
-        }
+      if (wasComplete) {
+        await axios.put(`${API_URL}/api/users/${userObj.email}`, userObj);
       }
     } catch (error) {
-      console.error('.delete /deletegoals/_id ERROR',error);
+      console.error('.delete /deletegoals/_id ERROR', error);
     }
-    setUserGoals(goals  => {return goals.filter((goal) => goal._id !== _id);});
+    setUserGoals(() => remaining);
     updateKey();
-  }
-  function adjustPoints(goal){
-    let userScore = score;
-    if(goal.complete == true){
-      switch(goal.difficulty){
-        case 'Easy':
-          userObj.dailyScore = userScore - 10;
-          setScore(userScore - 10);
-          break;
-        case 'Medium':
-          userObj.dailyScore = userScore - 25;
-          setScore(userScore - 25);
-          break;
-        case 'Hard':
-          userObj.dailyScore = userScore - 100;
-          setScore(userScore - 100);
-          break;
-      }
-    }
-    return userScore;
   }
   function sortByOrder(goals) {
   return [...goals].sort((a, b) => {
@@ -348,7 +344,7 @@ function sortGoals(goals){
         key={childKey}
         goals={allGoals}
         userObj={userObj} 
-        setTheme={setTheme} 
+        setTheme={applyTheme} 
         theme={theme} 
         goalInput={goalModal} 
         addGoal={startAddGoal}  

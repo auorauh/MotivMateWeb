@@ -131,7 +131,7 @@ function GoalItem(props){
       }}
     >
         <View style={[
-              (props.value.complete? [styles.goalItem,styles.completeGoal] : [styles.goalItem, {backgroundColor:props.theme.primary}])
+              (props.value.complete? [styles.goalItem,styles.completeGoal] : [styles.goalItem, {backgroundColor: props.theme.primary}])
               ]}>
             <View
               aria-label={`Reorder ${props.value.title}`}

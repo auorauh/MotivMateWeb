@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { StyleSheet, View, Pressable, TextInput } from '../platform';
+import FontAwesome5 from '../platform/icons';
 import TextFont from './TextFont';
 import { API_URL } from '../platform/env';
-import { formatRecord, isBetter, mergeHealth } from '../functions/healthRecords';
+import { formatRecord, formatValue, isBetter, mergeHealth } from '../functions/healthRecords';
 
 function storageKey(email) {
   return `mm-health:${email}`;
@@ -19,7 +20,7 @@ function readSaved(userObj) {
   }
 }
 
-function HealthSection({ userObj, theme, ink, muted, card, line }) {
+function HealthSection({ userObj, theme, ink, muted, card, line, onOpenCalories }) {
   const [records, setRecords] = useState(() => mergeHealth(readSaved(userObj)));
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState('');
@@ -38,9 +39,11 @@ function HealthSection({ userObj, theme, ink, muted, card, line }) {
       return;
     }
     const next = records.map((item) => (
-      item.id === record.id ? { ...item, value: nextValue } : item
+      item.id === record.id
+        ? { ...item, value: nextValue, previous: record.value }
+        : item
     ));
-    const stored = next.map(({ id, value }) => ({ id, value }));
+    const stored = next.map(({ id, value, previous }) => ({ id, value, previous }));
     userObj.health = stored;
     localStorage.setItem(storageKey(userObj.email), JSON.stringify(stored));
     setRecords(next);
@@ -57,6 +60,17 @@ function HealthSection({ userObj, theme, ink, muted, card, line }) {
   return (
     <View style={styles.section}>
       <TextFont style={[styles.heading, { color: muted }]}>Health</TextFont>
+      <Pressable
+        aria-label="Calorie tracker"
+        onPress={onOpenCalories}
+        style={[styles.link, { backgroundColor: card, borderColor: line }]}
+      >
+        <View style={styles.copy}>
+          <TextFont style={[styles.title, { color: ink }]}>Calorie tracker</TextFont>
+          <TextFont style={[styles.hint, { color: muted }]}>Log today's food</TextFont>
+        </View>
+        <FontAwesome5 name="chevron-right" style={{ fontSize: 14, color: muted }} />
+      </Pressable>
       {records.map((record) => {
         const open = editing === record.id;
         return (
@@ -76,9 +90,16 @@ function HealthSection({ userObj, theme, ink, muted, card, line }) {
                     {record.better === 'lower' ? 'Lower time wins' : 'Higher number wins'}
                   </TextFont>
                 </View>
-                <TextFont style={[styles.value, { color: record.value == null ? muted : ink }]}>
-                  {formatRecord(record)}
-                </TextFont>
+                <View style={styles.score}>
+                  <TextFont style={[styles.value, { color: record.value == null ? muted : ink }]}>
+                    {formatRecord(record)}
+                  </TextFont>
+                  {record.previous != null ? (
+                    <TextFont style={[styles.previous, { color: muted }]}>
+                      was {formatValue(record.previous, record.unit)}
+                    </TextFont>
+                  ) : null}
+                </View>
               </View>
             </Pressable>
             {open && (
@@ -114,6 +135,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  link: {
+    minHeight: 68,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingLeft: 18,
+    paddingRight: 16,
     marginBottom: 10,
   },
   card: {
@@ -156,6 +188,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'right',
+  },
+  previous: {
+    fontSize: 11,
+    textAlign: 'right',
+    marginTop: 2,
+  },
+  score: {
+    alignItems: 'flex-end',
   },
   editor: {
     flexDirection: 'row',

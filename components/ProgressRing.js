@@ -2,9 +2,9 @@ import React from 'react';
 import { Svg, Circle } from '../platform/svg';
 
 export default function ProgressRing( props ) {
-  const size = 200; // size of the circle in pixels
-  const strokeWidth = 12; // width of the circle's stroke in pixels
-  const radius = (size - strokeWidth-125) / 2; // radius of the circle
+  const size = props.size || 64;
+  const strokeWidth = 11;
+  const radius = (size - strokeWidth) / 2 - 1;
 
   // Calculate the circumference of the circle
   const circumference = radius * 2 * Math.PI;
@@ -16,7 +16,7 @@ export default function ProgressRing( props ) {
   const dashOffset = circumference - (progressDegrees / 360) * circumference;
 
   return (
-    <Svg width={size} height={size}>
+    <Svg width={size} height={size} style={{ transform: 'scaleX(-1) rotate(-90deg)' }}>
       <Circle
         cx={size / 2}
         cy={size / 2}

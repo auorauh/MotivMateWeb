@@ -1,5 +1,5 @@
-import { View, TextInput, Button, StyleSheet, Modal, Pressable,TouchableWithoutFeedback, Keyboard, Animated, ActivityIndicator} from '../platform';
-import { useState, useRef, useEffect } from 'react'
+import { View, TextInput, Button, StyleSheet, Modal, Pressable,TouchableWithoutFeedback, Keyboard} from '../platform';
+import { useState } from 'react'
 import GoalWizard from './GoalWizard';
 import FontAwesome5 from '../platform/icons';
 import axios from 'axios';
@@ -12,77 +12,24 @@ function GoalInput(props) {
     const [goalTitle, setGoalText] = useState('');
     const [goalType, setType] = useState('daily');
     const [level, setLevel] = useState('Easy');
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [sending, setSending] = useState(false);
     const [goalWizard, setGoalWizard] = useState();
 
-
-    const slideAnim = useRef(new Animated.Value(80)).current;
-    const wideAnim = useRef(new Animated.Value(185)).current;
-    const topAnim = useRef(new Animated.Value(645)).current;
-    const leftAnim = useRef(new Animated.Value(215)).current;
-    const bottomAnim = useRef(new Animated.Value(0)).current;
-    const rightAnim = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-    }, []); 
-    //button is 645,215
     function goalInputHandler(enteredText) {
         setGoalText(enteredText);
       }
-      const toggleExpand = () => {
-        setIsExpanded(!isExpanded);
-        const topCenter = Animated.timing(topAnim, {
-          toValue: 375, 
-          duration: 600,
-          useNativeDriver: false, 
-        });
-        const leftCenter= Animated.timing(leftAnim, {
-          toValue: 115, 
-          duration: 600,
-          useNativeDriver: false, 
-        });
-        const firstAnimation = Animated.parallel([topCenter, leftCenter]);
-        const height = Animated.timing(slideAnim, {
-          toValue: 900, 
-          duration: 600,
-          useNativeDriver: false, 
-        });
-        const width= Animated.timing(wideAnim, {
-          toValue: 450, 
-          duration: 600,
-          useNativeDriver: false, 
-        });
-        const top = Animated.timing(topAnim, {
-          toValue: -50, 
-          duration: 600,
-          useNativeDriver: false, 
-        });
-        const left = Animated.timing(leftAnim, {
-          toValue: -50, 
-          duration: 600,
-          useNativeDriver: false, 
-        });
-        const secondAnimation = Animated.parallel([height,width,top,left])
-        const finalAnimation = Animated.sequence([firstAnimation,secondAnimation])
-        finalAnimation.start();
-      };
     function addGoalHandler() {
-        toggleExpand();
-        setTimeout(() => {
-          postGoal();
-          setGoalText('');
-          setIsExpanded(!isExpanded);
-         }, 1200);
-    }
-    function postGoal(){
-      let goal = {owner: props.userObj._id, title: goalTitle, complete: false, type: goalType, difficulty: level, timesCompleted: 0};
-      axios.post(`${props.API_URL}/api/goals`, goal, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(res => props.onAddGoal(res.data))
-      .catch(err => console.log(err));
+        if (sending || !goalTitle.trim()) return;
+        setSending(true);
+        const goal = {owner: props.userObj._id, title: goalTitle.trim(), complete: false, type: goalType, difficulty: level, timesCompleted: 0};
+        axios.post(`${props.API_URL}/api/goals`, goal, {
+          headers: { 'Content-Type': 'application/json' },
+        }).then((res) => {
+          window.setTimeout(() => props.onAddGoal(res.data), 2200);
+        }).catch((err) => {
+          console.log(err);
+          setSending(false);
+        });
     }
     function toggleGoalWizard(toggleWizard){
       if(toggleWizard){
@@ -111,7 +58,7 @@ function GoalInput(props) {
     }
 
     return (
-      <Modal animationType="slide">
+      <Modal animationType="slide" className={sending ? 'mm-goal-leaving' : undefined}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           {goalWizard==undefined ?
           <View style={[styles.wizardContainer, {backgroundColor:props.userObj.theme.background}]}>
@@ -176,27 +123,24 @@ function GoalInput(props) {
                     <View style={styles.button}>
                         <Button title='Cancel' onPress={props.cancel} color={'gray'}/>
                     </View>
-                  <View style={[styles.button, {backgroundColor: '#00bcd4'}, isExpanded ? {opacity: 0} : null]}>
-                        <Pressable onPress={addGoalHandler} style={styles.addBtn}>
+                  <Pressable onPress={addGoalHandler} style={[styles.button, {backgroundColor: '#00bcd4'}]} aria-label="Add goal">
                         <FontAwesome5 style={[styles.newGoalText, {fontSize: 20}]} name={'paper-plane'} />
-                        </Pressable>
-                    </View>
+                    </Pressable>
                 </View>
             </View>
-                {isExpanded ? 
-                <Animated.View style={[styles.animatedBtn, {backgroundColor: '#00bcd4'},{  height: slideAnim, width: wideAnim}, {top: topAnim, left:leftAnim, right: rightAnim, bottom: bottomAnim}  ] } >
-                    <Pressable onPress={addGoalHandler} style={styles.addBtn}>
-                    <FontAwesome5 style={[styles.newGoalText, {fontSize: 20, paddingBottom: 15}]} name={'paper-plane'} />
-                    <ActivityIndicator color="black" />
-                    </Pressable>
-                </Animated.View>
-                : null}
                 </View>
           }
             </View>
             
               }
             </TouchableWithoutFeedback>
+            {sending ? (
+              <div className="mm-goal-send" aria-hidden="true">
+                <div className="mm-goal-plane">
+                  <FontAwesome5 style={{ fontSize: 36, color: '#241f33' }} name={'paper-plane'} />
+                </div>
+              </div>
+            ) : null}
       </Modal>
       );
 };
@@ -205,6 +149,7 @@ export default GoalInput;
 
 const styles = StyleSheet.create({
       inputContainer: {
+        position: 'relative',
         height: '100%',
         width: '100%',
         justifyContent: 'center',
@@ -287,12 +232,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
       },
-      addBtn: {
-        height: '100%',
-        width: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-      },
       easy: {
         color: '#58cc02',
       },
@@ -301,14 +240,6 @@ const styles = StyleSheet.create({
       },
       hard: {
         color: 'red',
-      },
-      animatedBtn: {
-        position: 'absolute', 
-        borderWidth: 2,
-        borderColor: 'gray',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 20,
       },
       newGoalText: {
         //transform: [{translateX: -7}],

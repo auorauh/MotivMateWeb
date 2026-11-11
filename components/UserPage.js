@@ -51,6 +51,7 @@ function UserPage(props) {
         muted={muted}
         card={card}
         line={line}
+        onOpenCalories={props.onOpenCalories}
       />
     </View>
   );

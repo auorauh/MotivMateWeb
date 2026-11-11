@@ -4,6 +4,7 @@ import GoalList from './GoalList';
 import GoalInput from './GoalInput';
 import AddGoalButton from './AddGoalButton';
 import UserPage from './UserPage';
+import CaloriePage from './CaloriePage';
 import Settings from './settings';
 import AnalyticsPage from './analyticsPage';
 import FontAwesome5 from '../platform/icons';
@@ -17,11 +18,37 @@ export default function Nav(props) {
   function goalList(){
     props.setMainComponent(props.goalList);
   }
+  function openCalories() {
+    props.setMainComponent(
+      <CaloriePage userObj={props.userObj} theme={props.theme} onBack={userButton} />
+    );
+  }
   function userButton(){
-    props.setMainComponent(<UserPage goals={props.goals} userObj={props.userObj} theme={props.theme} cancel={userButton}/>);
+    props.setMainComponent(
+      <UserPage
+        goals={props.goals}
+        userObj={props.userObj}
+        theme={props.theme}
+        cancel={userButton}
+        onOpenCalories={openCalories}
+      />
+    );
+  }
+  function openCaloriesFromAnalytics() {
+    props.setMainComponent(
+      <CaloriePage userObj={props.userObj} theme={props.theme} onBack={analyticsButton} />
+    );
   }
   function analyticsButton(){
-    props.setMainComponent(<AnalyticsPage goals={props.goals} userObj={props.userObj} theme={props.theme} cancel={analyticsButton}/>);
+    props.setMainComponent(
+      <AnalyticsPage
+        goals={props.goals}
+        userObj={props.userObj}
+        theme={props.theme}
+        cancel={analyticsButton}
+        onOpenCalories={openCaloriesFromAnalytics}
+      />
+    );
   }
   function settingsButton(){
     props.setMainComponent(<Settings API_URL={props.API_URL} setTheme={props.setTheme} theme={props.theme} userObj={props.userObj} cancel={settingsButton}/>);
