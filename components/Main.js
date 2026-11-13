@@ -325,7 +325,7 @@ function sortGoals(goals){
   return (
     <>
     {userObj.theme.background != '#0e1111' ?  <BackgroundSVG/> : <DarkBackground/>}
-    {theme.background != '#0e1111' ? <StatusBar style='dark'/> : <StatusBar style='light'/>}
+    {theme.background != '#0e1111' ? <StatusBar style='dark' background={theme.background}/> : <StatusBar style='light' background={theme.background}/>}
     <View style={[styles.container]}>
       <View style={styles.logoContainer}>
         <FontAwesome5 style={[styles.userIcon, userObj == {} ? {color:'#00bcd4'} : {color:theme.primary}]} name={'user-circle'} />
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     minHeight: 0,
-    paddingTop: 16,
+    paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))',
     width: '100%'
   },
   nav: {

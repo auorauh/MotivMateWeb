@@ -73,6 +73,7 @@ function CaloriePage({ userObj, theme, onBack }) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [goalDraft, setGoalDraft] = useState(() => String(readCalories(userObj).goal));
+  const [editingGoal, setEditingGoal] = useState(false);
   const [note, setNote] = useState('');
 
   const entries = todayEntries(book);
@@ -127,22 +128,55 @@ function CaloriePage({ userObj, theme, onBack }) {
     });
   }
 
+  function startGoalEdit() {
+    setGoalDraft(String(book.goal));
+    setEditingGoal(true);
+    setNote('');
+  }
+
   function saveGoal() {
     const next = Number(goalDraft);
     if (!Number.isFinite(next) || next <= 0) {
+      setGoalDraft(String(book.goal));
+      setEditingGoal(false);
       setNote('Enter a daily goal greater than 0.');
       return;
     }
-    persist({ ...book, goal: Math.round(next) });
-    setGoalDraft(String(Math.round(next)));
-    setNote('Goal saved.');
+    const rounded = Math.round(next);
+    setEditingGoal(false);
+    setGoalDraft(String(rounded));
+    if (rounded === book.goal) return;
+    persist({ ...book, goal: rounded });
   }
 
   return (
     <View style={styles.page}>
-      <Pressable aria-label="Back" onPress={onBack} style={styles.back}>
-        <TextFont style={[styles.backText, { color: ink }]}>Back</TextFont>
-      </Pressable>
+      <View style={styles.topBar}>
+        <Pressable aria-label="Back" onPress={onBack} style={styles.back}>
+          <TextFont style={[styles.backText, { color: ink }]}>Back</TextFont>
+        </Pressable>
+        {editingGoal ? (
+          <TextInput
+            aria-label="Daily calorie goal"
+            autoFocus
+            inputMode="numeric"
+            type="number"
+            style={[styles.goalInput, { color: ink, borderColor: line, backgroundColor: card }]}
+            value={goalDraft}
+            onChangeText={setGoalDraft}
+            onFocus={(event) => event.target.select()}
+            onBlur={saveGoal}
+            onSubmitEditing={saveGoal}
+            placeholder="2000"
+          />
+        ) : (
+          <Pressable aria-label="Edit daily calorie goal" onPress={startGoalEdit} style={styles.goalChip}>
+            <TextFont style={[styles.goalLabel, { color: muted }]}>Goal</TextFont>
+            <TextFont style={[styles.goalValue, { color: ink }]}>{book.goal.toLocaleString()}</TextFont>
+            <FontAwesome5 name="pencil-alt" style={{ fontSize: 11, color: muted, marginLeft: 5 }} />
+          </Pressable>
+        )}
+      </View>
       <TextFont style={[styles.title, { color: ink }]}>Calories</TextFont>
       <TextFont style={[styles.date, { color: muted }]}>{todayLabel}</TextFont>
 
@@ -162,18 +196,6 @@ function CaloriePage({ userObj, theme, onBack }) {
           {overflowFill > 0 ? (
             <View style={[styles.fill, styles.overfill, { width: `${overflowFill}%` }]} />
           ) : null}
-        </View>
-        <View style={styles.goalRow}>
-          <TextInput
-            aria-label="Daily calorie goal"
-            style={[styles.goalInput, { color: ink, borderColor: line }]}
-            value={goalDraft}
-            onChangeText={setGoalDraft}
-            placeholder="2000"
-          />
-          <Pressable style={[styles.add, { backgroundColor: theme.primary }]} onPress={saveGoal}>
-            <TextFont style={styles.addText}>Set goal</TextFont>
-          </Pressable>
         </View>
       </View>
 
@@ -225,9 +247,17 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
     alignItems: 'center',
   },
-  back: {
+  topBar: {
     width: '88%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
+  },
+  back: {
+    paddingTop: 4,
+    paddingBottom: 4,
+    paddingRight: 12,
   },
   backText: {
     fontSize: 15,
@@ -283,20 +313,33 @@ const styles = StyleSheet.create({
     backgroundColor: '#d64545',
     zIndex: 1,
   },
-  goalRow: {
+  goalChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 14,
+    paddingTop: 4,
+    paddingBottom: 4,
+    paddingLeft: 8,
+  },
+  goalLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginRight: 6,
+  },
+  goalValue: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   goalInput: {
-    width: 96,
-    height: 40,
-    borderRadius: 10,
+    width: 88,
+    height: 32,
+    borderRadius: 8,
     borderWidth: 1,
-    backgroundColor: 'rgba(255,255,255,0.72)',
-    paddingLeft: 10,
-    paddingRight: 10,
+    paddingLeft: 8,
+    paddingRight: 8,
     fontSize: 16,
+    textAlign: 'right',
   },
   form: {
     width: '88%',

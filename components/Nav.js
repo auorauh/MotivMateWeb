@@ -82,7 +82,8 @@ export default function Nav(props) {
 }
 const styles = StyleSheet.create({
     nav: {
-        height: 88,
+        height: 'calc(88px + env(safe-area-inset-bottom, 0px))',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         marginTop: -1,
         flexShrink: 0,
         width: '100%',

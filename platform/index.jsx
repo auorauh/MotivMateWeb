@@ -38,12 +38,26 @@ export function TextInput({
   placeholderTextColor,
   secureTextEntry,
   selectionColor,
+  autoFocus,
+  onBlur,
+  onFocus,
+  onSubmitEditing,
+  inputMode,
+  type,
+  ...rest
 }) {
   return (
     <input
       value={value}
       placeholder={placeholder}
-      type={secureTextEntry ? 'password' : 'text'}
+      type={secureTextEntry ? 'password' : (type || 'text')}
+      inputMode={inputMode}
+      autoFocus={autoFocus}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') onSubmitEditing?.(event);
+      }}
       onChange={(event) => onChangeText?.(event.target.value)}
       style={{
         fontFamily: 'inherit',
@@ -53,6 +67,7 @@ export function TextInput({
         ...flattenStyle(style),
         ...(placeholderTextColor ? { '--placeholder': placeholderTextColor } : null),
       }}
+      {...domProps(rest)}
     />
   );
 }

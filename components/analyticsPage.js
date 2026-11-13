@@ -62,6 +62,15 @@ function calorieLabel(amount, goal) {
   return 'over goal';
 }
 
+function compactCal(amount) {
+  if (!amount) return '';
+  if (amount >= 1000) {
+    const tenths = Math.round(amount / 100) / 10;
+    return `${tenths % 1 === 0 ? tenths.toFixed(0) : tenths.toFixed(1)}k`;
+  }
+  return String(Math.round(amount));
+}
+
 function scoreCaption(today, best) {
   const points = today ?? 0;
   const record = best ?? 0;
@@ -108,7 +117,9 @@ function AnalyticsPage(props) {
   for (let day = 1; day <= daysInMonth; day += 1) {
     monthCells.push(new Date(today.getFullYear(), today.getMonth(), day, 12));
   }
-  const emptySquare = props.userObj.theme.background === '#0e1111' ? 'rgba(255,249,239,0.16)' : '#e6dfd4';
+  const darkTheme = props.userObj.theme.background === '#0e1111';
+  const emptySquare = darkTheme ? 'rgba(255,249,239,0.16)' : '#e6dfd4';
+  const weekLetterColor = darkTheme ? '#fff9ef' : '#241f33';
   const dayMark = (date) => {
     const later = date && (
       date.getFullYear() > today.getFullYear()
@@ -116,12 +127,13 @@ function AnalyticsPage(props) {
       || (date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() > today.getDate())
     );
     if (!date || later) {
-      return { color: emptySquare, label: 'ahead' };
+      return { color: emptySquare, label: 'ahead', amount: 0 };
     }
     const amount = caloriesOn(calorieBook, dayKey(date));
     return {
       color: calorieColor(amount, calorieBook.goal) || emptySquare,
       label: calorieLabel(amount, calorieBook.goal),
+      amount,
     };
   };
 
@@ -215,9 +227,15 @@ function AnalyticsPage(props) {
         const mark = dayMark(date);
         const letter = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][date.getDay()];
         return (
-          <View key={dayKey(date)} style={styles.weekDay} aria-label={`${letter}, ${mark.label}`}>
-            <View style={[styles.weekSquare, { backgroundColor: mark.color }]} />
-            <TextFont style={[styles.weekLetter, {color: props.theme.secondary}]}>{letter}</TextFont>
+          <View key={dayKey(date)} style={styles.weekDay} aria-label={`${letter}, ${compactCal(mark.amount) || mark.label}`}>
+            <View style={[styles.weekSquare, { backgroundColor: mark.color }]}>
+              <TextFont style={[styles.weekLetter, { color: weekLetterColor }]}>
+                {letter}
+              </TextFont>
+            </View>
+            <TextFont style={[styles.weekCal, { color: props.theme.secondary }]}>
+              {compactCal(mark.amount) || ' '}
+            </TextFont>
           </View>
         );
       })}
@@ -312,13 +330,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   weekSquare: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   weekLetter: {
-    fontSize: 11,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  weekCal: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: -0.2,
     marginTop: 3,
+    minHeight: 13,
   },
   monthGrid: {
     flexDirection: 'row',
