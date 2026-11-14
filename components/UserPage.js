@@ -31,8 +31,7 @@ function UserPage(props) {
   return (
     <View style={styles.userPage}>
       <View style={styles.header}>
-        <TextFont style={[styles.name, { color: ink }]}>{props.userObj.name}</TextFont>
-        <TextFont style={[styles.email, { color: muted }]}>{props.userObj.email}</TextFont>
+        <TextFont style={[styles.name, { color: ink, fontSize: 16 }]}>{props.userObj.name}</TextFont>
       </View>
 
       <TextFont style={[styles.sectionLabel, { color: muted }]}>Overview</TextFont>
@@ -87,23 +86,19 @@ export default UserPage;
 const styles = StyleSheet.create({
   userPage: {
     width: '100%',
-    paddingTop: 28,
+    paddingTop: 12,
     paddingBottom: 160,
     alignItems: 'center',
   },
   header: {
     width: '88%',
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 12,
   },
   name: {
-    fontSize: 34,
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.2,
-  },
-  email: {
-    fontSize: 14,
-    marginTop: 4,
   },
   sectionLabel: {
     width: '88%',

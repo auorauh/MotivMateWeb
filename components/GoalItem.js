@@ -203,7 +203,24 @@ function GoalItem(props){
               <TextFont>{props.item}</TextFont> 
             </View>
             <View style={styles.streak}>
-              {props.value.streak > 0  ?<TextFont style={[{color: 'gray'}]}>Streak {props.value.streak} <FontAwesome5 name={'fire-alt'} /></TextFont>: <><TextFont> </TextFont></>}
+              {props.value.streak > 0 ? (
+                <View style={styles.streakRow}>
+                  <FontAwesome5
+                    name="fire-alt"
+                    style={{
+                      fontSize: 14,
+                      width: 14,
+                      height: 14,
+                      display: 'block',
+                      flexShrink: 0,
+                      color: props.value.complete ? '#ff6a1a' : 'gray',
+                    }}
+                  />
+                  <TextFont style={[styles.streakCount, { color: props.value.complete ? '#ff6a1a' : 'gray' }]}>
+                    {props.value.streak}
+                  </TextFont>
+                </View>
+              ) : null}
             </View>
             <TextFont  style={styles.difficulty}>     
             {props.value.difficulty == "Easy" ? '+ 10' : ''}
@@ -332,7 +349,22 @@ const styles = StyleSheet.create({
       streak: {
         height: '100%',
         justifyContent: 'center',
-        width: '20%'
+        alignItems: 'flex-end',
+        flexShrink: 0,
+        paddingRight: 6,
+      },
+      streakRow: {
+        flexDirection: 'row',
+        flexWrap: 'nowrap',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 3,
+      },
+      streakCount: {
+        fontSize: 14,
+        fontWeight: '700',
+        lineHeight: '14px',
+        whiteSpace: 'nowrap',
       },
       difficulty: {
         width: '10%',
