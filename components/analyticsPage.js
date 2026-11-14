@@ -51,7 +51,9 @@ function mixColor(from, to, amount) {
 function calorieColor(amount, goal) {
   if (!amount || !goal) return null;
   const ratio = amount / goal;
-  if (ratio < 1) return mixColor('#3c9a62', '#e2b340', Math.max(0, (ratio - 0.75) / 0.25));
+  if (ratio <= 1) {
+    return mixColor('#3c9a62', '#9cbc48', Math.max(0, (ratio - 0.7) / 0.3));
+  }
   return mixColor('#e2b340', '#d64545', Math.min(1, (ratio - 1) / 0.4));
 }
 
@@ -101,6 +103,12 @@ function AnalyticsPage(props) {
   const missedYesterday = scores.length > 0 && Number(scores[scores.length - 1]) === 0;
   const calorieBook = readCalorieBook(props.userObj);
   const today = new Date();
+  const startLabel = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() - Math.max(scores.length, 1),
+    12
+  ).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const nightsClosed = Math.max(today.getDate() - 1, 1);
   const finishedGoals = goalTitles.filter((goal) => goal.timesCompleted > 0);
   const untouchedGoals = goalTitles.filter((goal) => goal.timesCompleted === 0);
@@ -207,8 +215,14 @@ function AnalyticsPage(props) {
     })}
   </View>
   <View style={styles.barLabels}>
-    <TextFont style={{color:props.theme.secondary}}>^14 Days Ago</TextFont>
-    <TextFont style={{color:props.theme.secondary}}>Yesterday^</TextFont>
+    <View style={styles.axisEnd}>
+      <View style={[styles.axisTick, { backgroundColor: props.theme.secondary }]} />
+      <TextFont style={[styles.axisLabel, { color: props.theme.secondary }]}>{startLabel}</TextFont>
+    </View>
+    <View style={[styles.axisEnd, styles.axisEndRight]}>
+      <View style={[styles.axisTick, { backgroundColor: props.theme.secondary }]} />
+      <TextFont style={[styles.axisLabel, { color: props.theme.secondary }]}>Yesterday</TextFont>
+    </View>
   </View>
   <TextFont style={[styles.weekLine, {color:props.theme.secondary}]}>{weekCaption(scores)}</TextFont>
   {missedYesterday ? <TextFont style={styles.missed}>Missed yesterday</TextFont> : null}
@@ -494,7 +508,7 @@ const styles = StyleSheet.create({
   weekLine: {
     textAlign: 'center',
     fontSize: 14,
-    marginTop: 8,
+    marginTop: 10,
   },
   missed: {
     textAlign: 'center',
@@ -502,11 +516,29 @@ const styles = StyleSheet.create({
     color: '#8a5a32',
     marginTop: 4,
   },
-  barLabels : {
-    width: '95%',
+  barLabels: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignSelf: 'center',
-    marginTop: 4,
+    paddingLeft: 10,
+    paddingRight: 10,
+    marginTop: 2,
+  },
+  axisEnd: {
+    alignItems: 'flex-start',
+  },
+  axisEndRight: {
+    alignItems: 'flex-end',
+  },
+  axisTick: {
+    width: 8,
+    height: 2,
+    borderRadius: 1,
+    marginBottom: 3,
+    opacity: 0.75,
+  },
+  axisLabel: {
+    fontSize: 11,
+    whiteSpace: 'nowrap',
   },
 })

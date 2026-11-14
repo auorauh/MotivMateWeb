@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { StyleSheet, View, Pressable, TextInput } from '../platform';
+import { StyleSheet, View, Pressable, TextInput, ScrollView } from '../platform';
 import FontAwesome5 from '../platform/icons';
 import TextFont from './TextFont';
 import { API_URL } from '../platform/env';
@@ -17,12 +17,35 @@ function todayKey(date = new Date()) {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+function savedFoods(data) {
+  const rows = Array.isArray(data?.saved) ? data.saved : [];
+  return rows
+    .filter((item) => item && item.name && Number(item.calories) > 0)
+    .map((item) => ({
+      id: String(item.id || item.name),
+      name: String(item.name).slice(0, 40),
+      calories: Math.round(Number(item.calories)),
+    }));
+}
+
+function upsertSaved(saved, entry) {
+  const key = entry.name.trim().toLowerCase();
+  const existing = saved.find((item) => item.name.trim().toLowerCase() === key);
+  if (existing) {
+    return saved.map((item) => (
+      item.id === existing.id ? { ...item, name: entry.name, calories: entry.calories } : item
+    ));
+  }
+  return [...saved, { id: entry.id, name: entry.name, calories: entry.calories }];
+}
+
 function normalize(data) {
   const goal = Number(data?.goal);
   const log = data?.log && typeof data.log === 'object' && !Array.isArray(data.log) ? data.log : {};
   return {
     goal: Number.isFinite(goal) && goal > 0 ? Math.round(goal) : DEFAULT_GOAL,
     log,
+    saved: savedFoods(data),
   };
 }
 
@@ -72,6 +95,9 @@ function CaloriePage({ userObj, theme, onBack }) {
   const [book, setBook] = useState(() => readCalories(userObj));
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
+  const [saveFood, setSaveFood] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
+  const [savedQuery, setSavedQuery] = useState('');
   const [goalDraft, setGoalDraft] = useState(() => String(readCalories(userObj).goal));
   const [editingGoal, setEditingGoal] = useState(false);
   const [note, setNote] = useState('');
@@ -87,9 +113,29 @@ function CaloriePage({ userObj, theme, onBack }) {
     month: 'short',
     day: 'numeric',
   });
+  const savedSearch = savedQuery.trim().toLowerCase();
+  const visibleSaved = savedSearch
+    ? book.saved.filter((item) => (
+      item.name.toLowerCase().includes(savedSearch) || String(item.calories).includes(savedSearch)
+    ))
+    : book.saved;
+
+  function openSaved() {
+    setSavedQuery('');
+    setShowSaved(true);
+  }
+
+  function closeSaved() {
+    setShowSaved(false);
+    setSavedQuery('');
+  }
 
   function persist(next) {
-    const stored = { goal: next.goal, log: trimLog(next.log) };
+    const stored = {
+      goal: next.goal,
+      log: trimLog(next.log),
+      saved: savedFoods(next),
+    };
     userObj.calories = stored;
     localStorage.setItem(storageKey(userObj.email), JSON.stringify(stored));
     setBook(stored);
@@ -114,10 +160,32 @@ function CaloriePage({ userObj, theme, onBack }) {
     persist({
       ...book,
       log: { ...book.log, [key]: [...todayEntries(book), entry] },
+      saved: saveFood ? upsertSaved(book.saved, entry) : book.saved,
     });
     setName('');
     setAmount('');
+    setSaveFood(false);
     setNote('');
+  }
+
+  function addSavedToToday(item) {
+    const key = todayKey();
+    persist({
+      ...book,
+      log: {
+        ...book.log,
+        [key]: [...todayEntries(book), { id: `${Date.now()}`, name: item.name, calories: item.calories }],
+      },
+    });
+    closeSaved();
+    setNote('');
+  }
+
+  function unsaveFood(id) {
+    persist({
+      ...book,
+      saved: book.saved.filter((item) => item.id !== id),
+    });
   }
 
   function removeFood(id) {
@@ -199,24 +267,45 @@ function CaloriePage({ userObj, theme, onBack }) {
         </View>
       </View>
 
-      <View style={styles.form}>
+      <View style={[styles.savedLinkCard, { backgroundColor: card, borderColor: line }]}>
+        <Pressable aria-label="View saved foods" onPress={openSaved} style={styles.savedLinkHit}>
+          <TextFont style={[styles.savedLink, { color: ink }]}>View Saved Foods</TextFont>
+        </Pressable>
+      </View>
+
+      <View style={[styles.composer, { backgroundColor: card, borderColor: line }]}>
         <TextInput
           aria-label="Food name"
-          style={[styles.input, styles.nameInput, { color: ink, borderColor: line }]}
+          style={[styles.titleInput, { color: ink, borderColor: line }]}
           value={name}
           onChangeText={setName}
-          placeholder="Food"
+          placeholder="New food"
         />
-        <TextInput
-          aria-label="Calories"
-          style={[styles.input, styles.calorieInput, { color: ink, borderColor: line }]}
-          value={amount}
-          onChangeText={setAmount}
-          placeholder="Cal"
-        />
-        <Pressable aria-label="Add food" style={[styles.add, { backgroundColor: theme.primary }]} onPress={addFood}>
-          <TextFont style={styles.addText}>Add</TextFont>
-        </Pressable>
+        <View style={styles.composerRow}>
+          <TextInput
+            aria-label="Calories"
+            inputMode="numeric"
+            type="number"
+            style={[styles.input, styles.calorieInput, { color: ink, borderColor: line }]}
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="Cal"
+          />
+          <Pressable
+            aria-label={saveFood ? 'Stop bookmarking this food' : 'Bookmark this food'}
+            aria-pressed={saveFood}
+            style={styles.bookmark}
+            onPress={() => setSaveFood((on) => !on)}
+          >
+            <FontAwesome5
+              name={saveFood ? 'bookmark' : 'bookmark-o'}
+              style={{ fontSize: 18, color: saveFood ? ink : muted }}
+            />
+          </Pressable>
+          <Pressable aria-label="Add food" style={[styles.add, { backgroundColor: theme.primary }]} onPress={addFood}>
+            <TextFont style={styles.addText}>Add</TextFont>
+          </Pressable>
+        </View>
       </View>
       {note ? <TextFont style={[styles.note, { color: muted }]}>{note}</TextFont> : null}
 
@@ -234,6 +323,53 @@ function CaloriePage({ userObj, theme, onBack }) {
           </View>
         ))
       )}
+
+      {showSaved ? (
+        <View style={styles.overlay}>
+          <Pressable aria-label="Close saved foods" style={styles.scrim} onPress={closeSaved} />
+          <View style={[styles.sheet, { backgroundColor: dark ? '#1a1d1d' : '#fff9ef', borderColor: line }]}>
+            <View style={[styles.sheetHead, { borderColor: line }]}>
+              <TextFont style={[styles.sheetTitle, { color: ink }]}>Saved foods</TextFont>
+              <Pressable aria-label="Close" onPress={closeSaved} style={styles.sheetClose}>
+                <TextFont style={[styles.sheetCloseText, { color: ink }]}>Close</TextFont>
+              </Pressable>
+            </View>
+            <View style={[styles.searchWrap, { borderColor: line }]}>
+              <TextInput
+                aria-label="Search saved foods"
+                autoFocus
+                style={[styles.searchInput, { color: ink, borderColor: line }]}
+                value={savedQuery}
+                onChangeText={setSavedQuery}
+                placeholder="Search"
+              />
+            </View>
+            {book.saved.length === 0 ? (
+              <TextFont style={[styles.sheetEmpty, { color: muted }]}>Bookmark a food when you add it.</TextFont>
+            ) : visibleSaved.length === 0 ? (
+              <TextFont style={[styles.sheetEmpty, { color: muted }]}>No matches.</TextFont>
+            ) : (
+              <ScrollView style={styles.sheetList}>
+                {visibleSaved.map((item) => (
+                  <View key={item.id} style={[styles.entry, styles.sheetEntry, { backgroundColor: card, borderColor: line }]}>
+                    <Pressable
+                      aria-label={`Add ${item.name}`}
+                      onPress={() => addSavedToToday(item)}
+                      style={styles.sheetFood}
+                    >
+                      <TextFont style={[styles.food, { color: ink }]}>{item.name}</TextFont>
+                      <TextFont style={[styles.calories, { color: ink }]}>{item.calories}</TextFont>
+                    </Pressable>
+                    <Pressable aria-label={`Remove ${item.name} from saved`} onPress={() => unsaveFood(item.id)} style={styles.trash}>
+                      <FontAwesome5 name="trash" style={{ fontSize: 14, color: muted }} />
+                    </Pressable>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -341,33 +477,77 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'right',
   },
-  form: {
+  savedLinkCard: {
     width: '88%',
+    borderWidth: 1,
+    borderRadius: 16,
+    marginTop: 16,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savedLinkHit: {
+    width: '100%',
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 16,
+    paddingRight: 16,
+  },
+  savedLink: {
+    fontSize: 15,
+    fontWeight: '600',
+    textDecoration: 'underline',
+    textUnderlineOffset: 3,
+  },
+  composer: {
+    width: '88%',
+    borderWidth: 1,
+    borderRadius: 16,
+    marginTop: 10,
+    overflow: 'hidden',
+  },
+  titleInput: {
+    height: 58,
+    borderBottomWidth: 1,
+    backgroundColor: 'transparent',
+    paddingLeft: 16,
+    paddingRight: 16,
+    fontSize: 22,
+    fontWeight: '600',
+  },
+  composerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingLeft: 12,
+    paddingRight: 12,
   },
   input: {
     height: 40,
     borderRadius: 10,
     borderWidth: 1,
-    backgroundColor: 'rgba(255,255,255,0.72)',
+    backgroundColor: 'transparent',
     paddingLeft: 10,
     paddingRight: 10,
     fontSize: 16,
   },
-  nameInput: {
+  calorieInput: {
     flex: 1,
   },
-  calorieInput: {
-    width: 72,
+  bookmark: {
+    width: 40,
+    height: 40,
     marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   add: {
-    marginLeft: 8,
+    marginLeft: 4,
     height: 40,
-    paddingLeft: 14,
-    paddingRight: 14,
+    paddingLeft: 18,
+    paddingRight: 18,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -420,5 +600,91 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  sheet: {
+    width: '88%',
+    maxWidth: 420,
+    maxHeight: '70vh',
+    borderWidth: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    zIndex: 1,
+  },
+  sheetHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 14,
+    paddingBottom: 12,
+    paddingLeft: 16,
+    paddingRight: 10,
+    borderBottomWidth: 1,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  sheetClose: {
+    paddingTop: 6,
+    paddingBottom: 6,
+    paddingLeft: 10,
+    paddingRight: 8,
+  },
+  sheetCloseText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  searchWrap: {
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: 12,
+    paddingRight: 12,
+    borderBottomWidth: 1,
+  },
+  searchInput: {
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+    paddingLeft: 12,
+    paddingRight: 12,
+    fontSize: 16,
+  },
+  sheetEmpty: {
+    padding: 16,
+    fontSize: 14,
+  },
+  sheetList: {
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: 12,
+    paddingRight: 12,
+  },
+  sheetEntry: {
+    width: '100%',
+  },
+  sheetFood: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 52,
   },
 });

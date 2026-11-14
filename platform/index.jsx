@@ -44,30 +44,44 @@ export function TextInput({
   onSubmitEditing,
   inputMode,
   type,
+  multiline,
+  numberOfLines,
   ...rest
 }) {
+  const shared = {
+    value,
+    placeholder,
+    autoFocus,
+    onFocus,
+    onBlur,
+    onChange: (event) => onChangeText?.(event.target.value),
+    style: {
+      fontFamily: 'inherit',
+      background: 'transparent',
+      outline: 'none',
+      caretColor: selectionColor,
+      ...flattenStyle(style),
+      ...(placeholderTextColor ? { '--placeholder': placeholderTextColor } : null),
+      ...(multiline ? { resize: 'vertical' } : null),
+    },
+    ...domProps(rest),
+  };
+  if (multiline) {
+    return (
+      <textarea
+        rows={numberOfLines || 3}
+        {...shared}
+      />
+    );
+  }
   return (
     <input
-      value={value}
-      placeholder={placeholder}
       type={secureTextEntry ? 'password' : (type || 'text')}
       inputMode={inputMode}
-      autoFocus={autoFocus}
-      onFocus={onFocus}
-      onBlur={onBlur}
       onKeyDown={(event) => {
         if (event.key === 'Enter') onSubmitEditing?.(event);
       }}
-      onChange={(event) => onChangeText?.(event.target.value)}
-      style={{
-        fontFamily: 'inherit',
-        background: 'transparent',
-        outline: 'none',
-        caretColor: selectionColor,
-        ...flattenStyle(style),
-        ...(placeholderTextColor ? { '--placeholder': placeholderTextColor } : null),
-      }}
-      {...domProps(rest)}
+      {...shared}
     />
   );
 }

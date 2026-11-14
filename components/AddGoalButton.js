@@ -6,7 +6,7 @@ import { Pressable } from '../platform';
 export default function AddGoalButton(props) {
 
     return (
-        <Pressable style={styles.addContainer} onPress={props.passed}>
+        <Pressable data-tour="add" style={styles.addContainer} onPress={props.passed}>
             <View style={[styles.newBtn, {backgroundColor:props.theme.primary}]}>
                 <FontAwesome5 style={[styles.newGoalText, {backgroundColor:props.theme.primary}]}  name={'plus'} />
             </View>

@@ -9,6 +9,7 @@ body,
 html,
 body {
   background: #fff9ef;
+  overflow-x: hidden;
 }
 
 body {
@@ -112,6 +113,56 @@ input {
   to {
     transform: none;
     opacity: 1;
+  }
+}
+
+@keyframes mm-tab-from-right {
+  from {
+    opacity: 0.35;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mm-tab-from-left {
+  from {
+    opacity: 0.35;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mm-tab-clip {
+  width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.mm-tab-from-right,
+.mm-tab-from-left {
+  animation-duration: 220ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+.mm-tab-from-right {
+  animation-name: mm-tab-from-right;
+}
+
+.mm-tab-from-left {
+  animation-name: mm-tab-from-left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mm-tab-from-right,
+  .mm-tab-from-left {
+    animation: none;
   }
 }
 

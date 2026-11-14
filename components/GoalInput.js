@@ -12,6 +12,7 @@ function GoalInput(props) {
     const [goalTitle, setGoalText] = useState('');
     const [goalType, setType] = useState('daily');
     const [level, setLevel] = useState('Easy');
+    const [comments, setComments] = useState('');
     const [sending, setSending] = useState(false);
     const [goalWizard, setGoalWizard] = useState();
 
@@ -21,7 +22,7 @@ function GoalInput(props) {
     function addGoalHandler() {
         if (sending || !goalTitle.trim()) return;
         setSending(true);
-        const goal = {owner: props.userObj._id, title: goalTitle.trim(), complete: false, type: goalType, difficulty: level, timesCompleted: 0};
+        const goal = {owner: props.userObj._id, title: goalTitle.trim(), complete: false, type: goalType, difficulty: level, timesCompleted: 0, comments: comments.trim()};
         axios.post(`${props.API_URL}/api/goals`, goal, {
           headers: { 'Content-Type': 'application/json' },
         }).then((res) => {
@@ -48,6 +49,7 @@ function GoalInput(props) {
         type: goal.type,
         difficulty: goal.diff,
         timesCompleted: 0,
+        comments: (goal.comments || '').trim(),
       };
       return axios.post(`${props.API_URL}/api/goals`, payload, {
         headers: { 'Content-Type': 'application/json' },
@@ -119,6 +121,19 @@ function GoalInput(props) {
                 </View>
             </View>
             <View style={styles.goalSection}>
+              <TextFont style={styles.subText}>Comments</TextFont>
+                <TextInput
+                  style={[styles.textInput, styles.commentsInput]}
+                  placeholder='Notes about this goal'
+                  placeholderTextColor={'gray'}
+                  multiline
+                  numberOfLines={3}
+                  onChangeText={setComments}
+                  value={comments}
+                  selectionColor={'#d4af37'}
+                />
+            </View>
+            <View style={styles.goalSection}>
                 <View style={styles.buttonContainer}>
                     <View style={styles.button}>
                         <Button title='Cancel' onPress={props.cancel} color={'gray'}/>
@@ -172,6 +187,11 @@ const styles = StyleSheet.create({
         padding: 12,
         color: '#666',
         fontSize: 18,
+      },
+      commentsInput: {
+        minHeight: 72,
+        textAlign: 'left',
+        fontSize: 16,
       },
       types: {
         flexDirection: 'row',

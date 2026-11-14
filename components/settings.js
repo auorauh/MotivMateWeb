@@ -182,6 +182,15 @@ function Settings(props) {
                 <TextFont style={{ color: muted }}>Slide left to delete</TextFont>
               </View>
               <View style={styles.settingSection}>
+                <Pressable
+                  aria-label="How to use the app"
+                  onPress={() => props.onStartGuide?.()}
+                  style={[styles.reset, { borderColor: line, backgroundColor: card }]}
+                >
+                  <TextFont style={[styles.resetText, { color: ink }]}>How to use</TextFont>
+                </Pressable>
+              </View>
+              <View style={styles.settingSection}>
                 <View style={styles.toggleSection}>
                   <View style={[styles.notifications, { borderColor: line, backgroundColor: card }]}>
                   <TextFont style={[{fontSize: 16}, {color:newTheme.secondary}]}>Push reminders</TextFont>

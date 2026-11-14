@@ -46,7 +46,7 @@ return (
             ))}
         </View>
     <FlatList style={styles.goalSection} onRefresh={props.refresh} refreshing={props.refreshing} extraData={props.theme} numColumns={1} data={props.userGoals} ItemSeparatorComponent={() => <View style={{ height: 15 }} />} renderItem={(itemData) => {
-        return <GoalItem totalCount={props.userGoals.length} index={itemData.index} theme={props.theme || props.userObj.theme} value={itemData.item} onDeleteItem={props.deleteGoal} _id={itemData.item._id} complete={props.completeGoal} dropBefore={dropSlot && dropSlot.id === itemData.item._id && dropSlot.before} dropAfter={dropSlot && dropSlot.id === itemData.item._id && !dropSlot.before} onDragHover={hoverSlot} onReorder={props.onReorder}/>;
+        return <GoalItem totalCount={props.userGoals.length} index={itemData.index} theme={props.theme || props.userObj.theme} value={itemData.item} onDeleteItem={props.deleteGoal} _id={itemData.item._id} complete={props.completeGoal} onView={props.onViewGoal} dropBefore={dropSlot && dropSlot.id === itemData.item._id && dropSlot.before} dropAfter={dropSlot && dropSlot.id === itemData.item._id && !dropSlot.before} onDragHover={hoverSlot} onReorder={props.onReorder}/>;
         }}
         keyExtractor={(item) => {
             return item._id;

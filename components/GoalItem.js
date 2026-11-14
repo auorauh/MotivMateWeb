@@ -118,6 +118,17 @@ function GoalItem(props){
         { transform: [{ translateX: offset }], transition: dragging ? 'none' : 'transform 160ms ease' },
         pressed && offset === 0 ? styles.pressedItem : null,
       ]}
+      data-goal-card={props._id}
+      onLongPress={() => {
+        if (offsetRef.current !== 0) return;
+        Vibration.vibrate(18);
+        const node = document.querySelector(`[data-goal-card="${props._id}"]`);
+        const box = node?.getBoundingClientRect();
+        const origin = box ? { top: box.top, left: box.left, width: box.width, height: box.height } : null;
+        const payload = { goal: props.value, origin };
+        props.onView?.(payload);
+        window.dispatchEvent(new CustomEvent('mm-view-goal', { detail: payload }));
+      }}
       onPress={() => {
         if (suppressClick.current) {
           suppressClick.current = false;
@@ -183,9 +194,12 @@ function GoalItem(props){
               <FontAwesome5 name={'grip-lines'} />
             </View>
             <View style={styles.goalTextContainer}>
-              <TextFont style={styles.goalText}>
-                  {props.value.title}
-              </TextFont>
+              <View style={styles.goalCopy}>
+                <TextFont style={styles.goalText}>
+                    {props.value.title}
+                </TextFont>
+                <TextFont style={styles.holdHint}>hold to view</TextFont>
+              </View>
               <TextFont>{props.item}</TextFont> 
             </View>
             <View style={styles.streak}>
@@ -284,12 +298,27 @@ const styles = StyleSheet.create({
       goalTextContainer: {
         flex: 1,
         height: '100%',
+        minWidth: 0,
         alignItems: 'center',
         flexDirection: 'row',
         alignSelf: 'flex-start'
       },
+      goalCopy: {
+        flex: 1,
+        minWidth: 0,
+        justifyContent: 'center',
+        height: '100%',
+      },
       goalText: {
-        fontSize: 22,
+        fontSize: 20,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+      holdHint: {
+        fontSize: 11,
+        color: 'gray',
+        marginTop: 1,
       },
       moveIcon: {
         fontSize: 20,

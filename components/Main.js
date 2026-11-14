@@ -13,6 +13,8 @@ import {API_URL} from '../platform/env';
 import { blue } from '../functions/colors'
 import BackgroundSVG from '../assets/BackgroundSVG';
 import DarkBackground from '../assets/DarkBackground';
+import HowToGuide, { TOUR_STEPS } from './HowToGuide';
+import GoalDetail from './GoalDetail';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -39,14 +41,24 @@ export default function App( {route} ) {
   const [refreshing, setRefreshing] = useState(false);
   const [lastOpenDate, setLastOpenDate] = useState(null);
   const [childKey, setChildKey] = useState(1);
+  const [guideStep, setGuideStep] = useState(-1);
+  const [viewingGoal, setViewingGoal] = useState(null);
+  const [viewOrigin, setViewOrigin] = useState(null);
   const childRef = useRef(null);
-  const goalList = <GoalList API_URL={API_URL} ref={childRef} userObj={userObj} theme={theme} refresh={refresh} refreshing={refreshing} userGoals={userGoals} completeGoal={completeGoal} deleteGoal={deleteGoal} setListType={setListType} onReorder={reorderGoals}/>;
+  const goalList = <GoalList API_URL={API_URL} ref={childRef} userObj={userObj} theme={theme} refresh={refresh} refreshing={refreshing} userGoals={userGoals} completeGoal={completeGoal} deleteGoal={deleteGoal} setListType={setListType} onReorder={reorderGoals} onViewGoal={viewGoal}/>;
 
   const updateKey = () => {
     // Generate a new unique key for the child component to re-render on change
     const newKey = Date.now();
     setChildKey(newKey);
   };
+  useEffect(() => {
+    function onViewGoalEvent(event) {
+      unpackView(event?.detail);
+    }
+    window.addEventListener('mm-view-goal', onViewGoalEvent);
+    return () => window.removeEventListener('mm-view-goal', onViewGoalEvent);
+  }, []);
   useEffect(() => {
     const refreshOnOpen = (nextAppState) => {
       if (nextAppState == 'active') {
@@ -182,6 +194,33 @@ function addGoalHandler(goalObject) {
 }
 function setMainComponent(component){
 setComponent(component);
+}
+function unpackView(payload) {
+  if (!payload) return;
+  if (payload.goal) {
+    setViewingGoal({ ...payload.goal });
+    setViewOrigin(payload.origin || null);
+    return;
+  }
+  setViewingGoal({ ...payload });
+  setViewOrigin(payload.origin || null);
+}
+function viewGoal(payload) {
+  unpackView(payload);
+}
+function saveGoalDetails(next) {
+  const current = userGoals.find((goal) => goal._id === next._id);
+  if (!current) return;
+  const patched = { ...current, ...next };
+  const apply = (list) => list.map((goal) => (goal._id === patched._id ? patched : goal));
+  setUserGoals(apply);
+  const full = (allGoals.length ? allGoals : userGoals).map((goal) => (goal._id === patched._id ? patched : goal));
+  sortGoals(full);
+  setViewingGoal(patched);
+  axios.put(`${API_URL}/api/users/goals/${patched._id}`, patched).catch((error) => {
+    console.log('.put /goals details ERROR', error);
+  });
+  updateKey();
 }
 function completeGoal(_id) {
   const goal = userGoals.find((goal) => goal._id === _id);
@@ -327,7 +366,7 @@ function sortGoals(goals){
     {userObj.theme.background != '#0e1111' ?  <BackgroundSVG/> : <DarkBackground/>}
     {theme.background != '#0e1111' ? <StatusBar style='dark' background={theme.background}/> : <StatusBar style='light' background={theme.background}/>}
     <View style={[styles.container]}>
-      <View style={styles.logoContainer}>
+      <View data-tour="score" style={styles.logoContainer}>
         <FontAwesome5 style={[styles.userIcon, userObj == {} ? {color:'#00bcd4'} : {color:theme.primary}]} name={'user-circle'} />
         <TextFont style={styles.scoreText}>Score: {score}</TextFont>
       </View>
@@ -350,7 +389,30 @@ function sortGoals(goals){
         addGoal={startAddGoal}  
         onAddGoal={addGoalHandler} 
         cancel={cancelGoal}
+        onStartGuide={() => setGuideStep(0)}
+        tourTarget={guideStep >= 0 ? TOUR_STEPS[guideStep].show : null}
       />
+      {guideStep >= 0 ? (
+        <HowToGuide
+          key={guideStep}
+          step={guideStep}
+          onNext={() => setGuideStep((current) => current + 1)}
+          onPrev={() => setGuideStep((current) => Math.max(0, current - 1))}
+          onClose={() => setGuideStep(-1)}
+        />
+      ) : null}
+      {viewingGoal ? (
+        <GoalDetail
+          goal={viewingGoal}
+          origin={viewOrigin}
+          theme={theme}
+          onClose={() => {
+            setViewingGoal(null);
+            setViewOrigin(null);
+          }}
+          onSave={saveGoalDetails}
+        />
+      ) : null}
     </>
   );
 }
@@ -389,6 +451,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     overflowY: 'auto',
+    overflowX: 'hidden',
   },
   nav: {
     height: '10%',

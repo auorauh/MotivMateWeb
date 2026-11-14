@@ -1,5 +1,6 @@
-import { StyleSheet, View } from '../platform';
+import { StyleSheet, View, Pressable } from '../platform';
 import { useEffect, useState } from 'react';
+import FontAwesome5 from '../platform/icons';
 import TextFont from './TextFont';
 import HealthSection from './HealthSection';
 
@@ -42,6 +43,30 @@ function UserPage(props) {
             <TextFont style={[styles.statLabel, { color: muted }]}>{stat.label}</TextFont>
           </View>
         ))}
+      </View>
+
+      <TextFont style={[styles.sectionLabel, styles.listsLabel, { color: muted }]}>Lists</TextFont>
+      <View style={styles.grid}>
+        <Pressable
+          aria-label="Grocery lists"
+          onPress={props.onOpenGroceries}
+          style={[styles.listButton, { backgroundColor: card, borderColor: line }]}
+        >
+          <View style={styles.listButtonRow}>
+            <FontAwesome5 name="shopping-cart" style={{ fontSize: 20, color: ink, marginRight: 10 }} />
+            <TextFont style={[styles.listButtonTitle, { color: ink }]}>Grocery lists</TextFont>
+          </View>
+        </Pressable>
+        <Pressable
+          aria-label="Meal plan"
+          onPress={props.onOpenMeals}
+          style={[styles.listButton, { backgroundColor: card, borderColor: line }]}
+        >
+          <View style={styles.listButtonRow}>
+            <FontAwesome5 name="utensils" style={{ fontSize: 20, color: ink, marginRight: 10 }} />
+            <TextFont style={[styles.listButtonTitle, { color: ink }]}>Meal plan</TextFont>
+          </View>
+        </Pressable>
       </View>
 
       <HealthSection
@@ -111,5 +136,28 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 13,
     marginTop: 2,
+  },
+  listsLabel: {
+    marginTop: 8,
+  },
+  listButton: {
+    width: '48%',
+    minHeight: 72,
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    paddingLeft: 14,
+    paddingRight: 14,
+    marginBottom: 12,
+    justifyContent: 'center',
+  },
+  listButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  listButtonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

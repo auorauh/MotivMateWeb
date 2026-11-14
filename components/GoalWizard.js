@@ -62,6 +62,7 @@ function GoalWizard(props) {
   const [difficulty, setDifficulty] = useState('');
   const [type, setType] = useState('');
   const [title, setTitle] = useState('');
+  const [comments, setComments] = useState('');
   const [saving, setSaving] = useState(false);
 
   const actions = area && ACTIONS[area] ? ACTIONS[area].content : [];
@@ -92,6 +93,7 @@ function GoalWizard(props) {
         title: title.trim(),
         diff: difficulty,
         type,
+        comments: comments.trim(),
       })).catch(() => setSaving(false));
       return;
     }
@@ -168,6 +170,15 @@ function GoalWizard(props) {
             <TextFont style={styles.summary}>
               {type === 'daily' ? 'Daily' : 'To Do'} · {difficulty} · {POINTS[difficulty]}
             </TextFont>
+            <TextInput
+              style={[styles.input, styles.commentsInput, { color: theme.secondary, borderColor: theme.secondary }]}
+              value={comments}
+              onChangeText={setComments}
+              multiline
+              numberOfLines={3}
+              placeholder="Comments (optional)"
+              placeholderTextColor={'gray'}
+            />
           </View>
         ) : null}
       </View>
@@ -341,6 +352,11 @@ const styles = StyleSheet.create({
   },
   summary: {
     color: 'gray',
+    fontSize: 16,
+  },
+  commentsInput: {
+    minHeight: 72,
+    textAlign: 'left',
     fontSize: 16,
   },
   footer: {
