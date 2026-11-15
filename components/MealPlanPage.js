@@ -318,7 +318,7 @@ function MealPlanPage({ userObj, theme, onBack, addRef }) {
         })}
       </View>
 
-      <ScrollView style={styles.scroll}>
+      <View style={styles.body}>
         {flash ? <TextFont style={[styles.flash, { color: muted }]}>{flash}</TextFont> : null}
         <View style={[styles.summary, { backgroundColor: card, borderColor: line }]}>
           <TextFont style={[styles.dayTitle, { color: ink }]}>{selectedLabel}</TextFont>
@@ -393,7 +393,7 @@ function MealPlanPage({ userObj, theme, onBack, addRef }) {
           </Pressable>
         </View>
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </View>
 
       {showRecipes ? (
         <View style={styles.overlay}>
@@ -608,13 +608,14 @@ export default MealPlanPage;
 const styles = StyleSheet.create({
   page: {
     width: '100%',
-    height: '100%',
-    minHeight: 0,
+    maxWidth: '100%',
     paddingTop: 20,
+    paddingBottom: 120,
+    alignItems: 'center',
+    alignSelf: 'stretch',
   },
   topBar: {
     width: '88%',
-    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
@@ -641,7 +642,6 @@ const styles = StyleSheet.create({
   },
   weekHead: {
     width: '88%',
-    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
@@ -660,13 +660,14 @@ const styles = StyleSheet.create({
   },
   weekRow: {
     width: '88%',
-    alignSelf: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 4,
     marginBottom: 12,
   },
   dayChip: {
-    width: 42,
+    flex: 1,
+    minWidth: 0,
     height: 62,
     borderRadius: 14,
     borderWidth: 1,
@@ -694,14 +695,12 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
   },
-  scroll: {
-    flex: 1,
-    minHeight: 0,
-    paddingBottom: 120,
+  body: {
+    width: '100%',
+    alignItems: 'center',
   },
   summary: {
     width: '88%',
-    alignSelf: 'center',
     borderWidth: 1,
     borderRadius: 16,
     padding: 14,
@@ -744,7 +743,6 @@ const styles = StyleSheet.create({
   },
   slotBlock: {
     width: '88%',
-    alignSelf: 'center',
     marginBottom: 16,
   },
   slotHead: {
@@ -780,7 +778,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     width: '88%',
-    alignSelf: 'center',
     flexDirection: 'row',
     gap: 8,
     marginTop: 4,
@@ -802,7 +799,6 @@ const styles = StyleSheet.create({
   },
   flash: {
     width: '88%',
-    alignSelf: 'center',
     fontSize: 13,
     marginTop: 10,
     textAlign: 'center',
@@ -944,18 +940,21 @@ const styles = StyleSheet.create({
   addOverlay: {
     position: 'fixed',
     top: 0,
+    right: 0,
     bottom: 0,
-    left: '50%',
-    width: 480,
-    maxWidth: '100%',
-    transform: [{ translateX: '-50%' }],
+    left: 0,
     zIndex: 90,
-    justifyContent: 'center',
-    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 24,
+    paddingBottom: 24,
+    paddingLeft: 24,
+    paddingRight: 24,
     overflowY: 'auto',
   },
   goalContainer: {
     width: '100%',
+    maxWidth: 432,
     gap: 16,
   },
   goalSection: {
