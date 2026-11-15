@@ -39,13 +39,14 @@ export default function App( {route} ) {
   const [toDoGoals, setToDoGoals] = useState([]);
   const [score, setScore] = useState();
   const [refreshing, setRefreshing] = useState(false);
+  const [goalsLoading, setGoalsLoading] = useState(true);
   const [lastOpenDate, setLastOpenDate] = useState(null);
   const [childKey, setChildKey] = useState(1);
   const [guideStep, setGuideStep] = useState(-1);
   const [viewingGoal, setViewingGoal] = useState(null);
   const [viewOrigin, setViewOrigin] = useState(null);
   const childRef = useRef(null);
-  const goalList = <GoalList API_URL={API_URL} ref={childRef} userObj={userObj} theme={theme} refresh={refresh} refreshing={refreshing} userGoals={userGoals} completeGoal={completeGoal} deleteGoal={deleteGoal} setListType={setListType} onReorder={reorderGoals} onViewGoal={viewGoal}/>;
+  const goalList = <GoalList API_URL={API_URL} ref={childRef} userObj={userObj} theme={theme} refresh={refresh} refreshing={refreshing} loading={goalsLoading} userGoals={userGoals} completeGoal={completeGoal} deleteGoal={deleteGoal} setListType={setListType} onReorder={reorderGoals} onViewGoal={viewGoal}/>;
 
   const updateKey = () => {
     // Generate a new unique key for the child component to re-render on change
@@ -68,6 +69,7 @@ export default function App( {route} ) {
     };
     const resetUser = () => {
       setRefreshing(true)
+      setGoalsLoading(true);
       setAllGoals([]);
       setUserGoals([]);
       setScore('-');
@@ -82,6 +84,8 @@ export default function App( {route} ) {
       getGoals(userObj._id);
       sortGoals(userGoals);
       setScore(userObj.dailyScore);
+    } else {
+      setGoalsLoading(false);
     }
     const getPermission = async () => {
           const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -139,24 +143,34 @@ async function getUser(email){
     setuserObj(user);
 }
 async function getGoals(_id) {
+    if (!_id) {
+      setGoalsLoading(false);
+      return;
+    }
+    setGoalsLoading(true);
+    const started = Date.now();
     axios.get(`${API_URL}/api/users/goals/${_id}`, {
       params: {
         _id: userObj._id
       }
     })
       .then(function (response) {
-        if(response.data){
-          const ordered = sortByOrder(response.data);
-          setUserGoals(ordered);
-          sortGoals(ordered);
+        const show = () => {
+          if(response.data){
+            const ordered = sortByOrder(response.data);
+            setUserGoals(ordered);
+            sortGoals(ordered);
+          }
+          setGoalsLoading(false);
           updateKey();
-        }
+        };
+        const wait = Math.max(0, 640 - (Date.now() - started));
+        window.setTimeout(show, wait);
       })
       .catch(function (error) {
         console.log('.get /goals/_id ERROR',error);
+        setGoalsLoading(false);
       });
-      setTimeout(() => {
-      }, 0);
 }
 function applyTheme(nextTheme) {
   setTheme(nextTheme);

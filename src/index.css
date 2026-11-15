@@ -180,6 +180,58 @@ input {
   }
 }
 
+.mm-goal-skeleton {
+  position: relative;
+  overflow: hidden;
+  opacity: 0.4;
+}
+
+.mm-goal-skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 38%;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 38%,
+    rgba(255, 255, 255, 0.78) 50%,
+    rgba(255, 255, 255, 0.2) 62%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: mm-skeleton-wipe 1.35s ease-in-out infinite;
+  animation-delay: var(--mm-skel-delay, 0ms);
+  pointer-events: none;
+}
+
+.mm-goal-skeleton-dark::after {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 249, 239, 0) 0%,
+    rgba(255, 249, 239, 0.1) 38%,
+    rgba(255, 249, 239, 0.38) 50%,
+    rgba(255, 249, 239, 0.1) 62%,
+    rgba(255, 249, 239, 0) 100%
+  );
+}
+
+@keyframes mm-skeleton-wipe {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mm-goal-skeleton::after {
+    animation: none;
+  }
+}
+
 .mm-goal-send {
   position: absolute;
   inset: 0;
