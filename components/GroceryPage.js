@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 import { StyleSheet, View, Pressable, FlatList, TextInput, Button } from '../platform';
 import FontAwesome5 from '../platform/icons';
 import TextFont from './TextFont';
@@ -6,70 +7,23 @@ import BackgroundSVG from '../assets/BackgroundSVG';
 import DarkBackground from '../assets/DarkBackground';
 import GroceryDetail from './GroceryDetail';
 import GroceryItem from './GroceryItem';
-import { peekGroceryQueue, takeGroceryQueue } from '../functions/meals';
-
-function grocery(id, title, amount, aisle, complete, daysAgo, comments = '') {
-  const created = new Date(Date.UTC(2026, 10, 13));
-  created.setUTCDate(created.getUTCDate() - daysAgo);
-  return { id, title, amount, aisle, complete, comments, createdAt: created.toISOString() };
-}
-
-const DUMMY_GROCERIES = [
-  grocery('g1', 'Bananas', '6', 'Produce', false, 5),
-  grocery('g2', 'Spinach', '1 bag', 'Produce', false, 4),
-  grocery('g3', 'Avocados', '3', 'Produce', true, 6),
-  grocery('g4', 'Strawberries', '1 lb', 'Produce', false, 3),
-  grocery('g5', 'Broccoli', '2', 'Produce', false, 2),
-  grocery('g6', 'Oat milk', '2', 'Aisle', false, 5),
-  grocery('g7', 'Pasta', '1 lb', 'Aisle', false, 4),
-  grocery('g8', 'Olive oil', '1', 'Aisle', true, 8),
-  grocery('g9', 'Peanut butter', '1', 'Aisle', false, 3),
-  grocery('g10', 'Coffee', '1 bag', 'Aisle', false, 1),
-  grocery('g11', 'Eggs', '12', 'Aisle', false, 2),
-  grocery('g12', 'Rice', '2 lb', 'Aisle', false, 7),
-];
+import { API_URL } from '../platform/env';
+import {
+  absorbGroceryQueue,
+  emptyGroceries,
+  groceriesKey,
+  normalizeGroceries,
+  previewGroceryQueue,
+  readGroceries,
+  readGroceryDraft,
+  writeGroceryDraft,
+} from '../functions/groceries';
 
 const TABS = [
   { id: 'All', label: 'All' },
   { id: 'Produce', label: 'Produce' },
   { id: 'Aisle', label: 'Aisle' },
 ];
-
-const STARTER_LISTS = [
-  {
-    id: 'weekly',
-    name: "This week's shop",
-    items: DUMMY_GROCERIES,
-  },
-  {
-    id: 'costco',
-    name: 'Costco run',
-    items: [
-      grocery('c1', 'Paper towels', '12', 'Aisle', false, 4),
-      grocery('c2', 'Rotisserie chicken', '1', 'Aisle', false, 2),
-      grocery('c3', 'Frozen berries', '2', 'Produce', false, 3),
-      grocery('c4', 'Almonds', '1', 'Aisle', true, 6),
-    ],
-  },
-  {
-    id: 'party',
-    name: 'Party snacks',
-    items: [
-      grocery('p1', 'Chips', '2', 'Aisle', false, 2),
-      grocery('p2', 'Salsa', '1', 'Aisle', false, 2),
-      grocery('p3', 'Sparkling water', '12', 'Aisle', false, 1),
-      grocery('p4', 'Cookies', '1', 'Aisle', false, 3),
-    ],
-  },
-];
-
-function withQueuedItems(lists, email) {
-  const queued = peekGroceryQueue(email);
-  if (!queued.length) return lists;
-  return lists.map((list, index) => (
-    index === 0 ? { ...list, items: [...list.items, ...queued] } : list
-  ));
-}
 
 function GroceryPage({ theme, onBack, addRef, userObj }) {
   const dark = theme.background === '#0e1111';
@@ -78,36 +32,82 @@ function GroceryPage({ theme, onBack, addRef, userObj }) {
   const card = dark ? 'rgba(255,249,239,0.07)' : 'rgba(255,255,255,0.82)';
   const line = dark ? 'rgba(255,249,239,0.14)' : 'rgba(36,31,51,0.08)';
   const [tab, setTab] = useState('All');
-  const [lists, setLists] = useState(() => withQueuedItems(STARTER_LISTS, userObj?.email));
-  const [currentId, setCurrentId] = useState(STARTER_LISTS[0].id);
+  const [book, setBook] = useState(() => previewGroceryQueue(readGroceries(userObj), userObj?.email));
   const [showCabinet, setShowCabinet] = useState(false);
   const [namingList, setNamingList] = useState(false);
   const [listName, setListName] = useState('');
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
-  const [adding, setAdding] = useState(false);
-  const [title, setTitle] = useState('');
-  const [amount, setAmount] = useState('');
-  const [aisle, setAisle] = useState('Aisle');
-  const [comments, setComments] = useState('');
+  const [adding, setAdding] = useState(() => readGroceryDraft(userObj?.email).adding);
+  const [title, setTitle] = useState(() => readGroceryDraft(userObj?.email).title);
+  const [amount, setAmount] = useState(() => readGroceryDraft(userObj?.email).amount);
+  const [aisle, setAisle] = useState(() => readGroceryDraft(userObj?.email).aisle);
+  const [comments, setComments] = useState(() => readGroceryDraft(userObj?.email).comments);
   const [viewing, setViewing] = useState(null);
   const [viewOrigin, setViewOrigin] = useState(null);
+  const bookRef = useRef(book);
+  const saveTimer = useRef(0);
+  bookRef.current = book;
 
-  useEffect(() => {
-    takeGroceryQueue(userObj?.email);
-  }, [userObj?.email]);
-
+  const lists = book.lists;
+  const currentId = book.currentId;
   const current = lists.find((list) => list.id === currentId) || lists[0];
   const items = current?.items || [];
   const visible = tab === 'All' ? items : items.filter((item) => item.aisle === tab);
 
+  function persist(next) {
+    const stored = normalizeGroceries(next);
+    userObj.groceries = stored;
+    localStorage.setItem(groceriesKey(userObj?.email), JSON.stringify(stored));
+    setBook(stored);
+    bookRef.current = stored;
+    if (!userObj?.email) return stored;
+    window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => {
+      axios.put(`${API_URL}/api/users/${userObj.email}`, { ...userObj, groceries: stored }).catch((error) => {
+        console.log('grocery save', error);
+      });
+    }, 280);
+    return stored;
+  }
+
   function setCurrentItems(nextItems) {
     const id = current?.id;
     if (!id) return;
-    setLists((all) => all.map((list) => (
-      list.id === id ? { ...list, items: nextItems } : list
-    )));
+    persist({
+      ...book,
+      lists: book.lists.map((list) => (
+        list.id === id ? { ...list, items: nextItems } : list
+      )),
+    });
   }
+
+  useEffect(() => {
+    const merged = absorbGroceryQueue(readGroceries(userObj), userObj?.email);
+    if (merged.merged) persist(merged.book);
+  }, [userObj?.email]);
+
+  useEffect(() => {
+    writeGroceryDraft(userObj?.email, { adding, title, amount, aisle, comments });
+  }, [adding, title, amount, aisle, comments, userObj?.email]);
+
+  useEffect(() => {
+    function flush() {
+      const stored = normalizeGroceries(bookRef.current);
+      localStorage.setItem(groceriesKey(userObj?.email), JSON.stringify(stored));
+      if (!userObj?.email) return;
+      axios.put(`${API_URL}/api/users/${userObj.email}`, { ...userObj, groceries: stored }).catch((error) => {
+        console.log('grocery save', error);
+      });
+    }
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', flush);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', flush);
+      window.clearTimeout(saveTimer.current);
+    };
+  }, [userObj?.email]);
 
   useEffect(() => {
     if (!addRef) return undefined;
@@ -150,6 +150,7 @@ function GroceryPage({ theme, onBack, addRef, userObj }) {
     setTitle('');
     setAmount('');
     setComments('');
+    writeGroceryDraft(userObj?.email, { adding: false, title: '', amount: '', aisle: nextAisle, comments: '' });
   }
 
   function saveItem(next) {
@@ -178,8 +179,10 @@ function GroceryPage({ theme, onBack, addRef, userObj }) {
     const name = listName.trim();
     if (!name) return;
     const id = `list-${Date.now()}`;
-    setLists((all) => [...all, { id, name: name.slice(0, 32), items: [] }]);
-    setCurrentId(id);
+    persist({
+      currentId: id,
+      lists: [...book.lists, { id, name: name.slice(0, 32), items: [] }],
+    });
     setTab('All');
     setNamingList(false);
     setListName('');
@@ -188,7 +191,7 @@ function GroceryPage({ theme, onBack, addRef, userObj }) {
   }
 
   function openList(id) {
-    setCurrentId(id);
+    persist({ ...book, currentId: id });
     setTab('All');
     setShowCabinet(false);
     setNamingList(false);
@@ -196,10 +199,13 @@ function GroceryPage({ theme, onBack, addRef, userObj }) {
   }
 
   function deleteList(id) {
-    const next = lists.filter((list) => list.id !== id);
-    setLists(next);
+    let next = book.lists.filter((list) => list.id !== id);
+    if (!next.length) next = emptyGroceries().lists;
+    persist({
+      currentId: currentId === id ? next[0].id : currentId,
+      lists: next,
+    });
     if (currentId === id) {
-      setCurrentId(next[0]?.id || '');
       setTab('All');
       setEditingName(false);
       setViewing(null);
@@ -212,6 +218,18 @@ function GroceryPage({ theme, onBack, addRef, userObj }) {
     setEditingName(true);
   }
 
+  function applyRename(value) {
+    if (!current) return;
+    const name = value.trim().slice(0, 32);
+    if (!name) return;
+    persist({
+      ...book,
+      lists: book.lists.map((list) => (
+        list.id === current.id ? { ...list, name } : list
+      )),
+    });
+  }
+
   function saveRename() {
     const name = nameDraft.trim();
     setEditingName(false);
@@ -220,9 +238,7 @@ function GroceryPage({ theme, onBack, addRef, userObj }) {
       setNameDraft(current.name);
       return;
     }
-    setLists((all) => all.map((list) => (
-      list.id === current.id ? { ...list, name: name.slice(0, 32) } : list
-    )));
+    applyRename(name);
   }
 
   return (
@@ -237,7 +253,10 @@ function GroceryPage({ theme, onBack, addRef, userObj }) {
             autoFocus
             style={[styles.listNameInput, { color: ink, borderColor: line }]}
             value={nameDraft}
-            onChangeText={setNameDraft}
+            onChangeText={(value) => {
+              setNameDraft(value);
+              applyRename(value);
+            }}
             onFocus={(event) => event.target.select()}
             onBlur={saveRename}
             onSubmitEditing={saveRename}
