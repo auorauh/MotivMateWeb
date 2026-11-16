@@ -128,6 +128,7 @@ function CaloriePage({ userObj, theme, onBack }) {
   const [saveFood, setSaveFood] = useState(() => readDraft(userObj?.email).saveFood);
   const [showSaved, setShowSaved] = useState(false);
   const [savedQuery, setSavedQuery] = useState('');
+  const [viewFrame, setViewFrame] = useState(null);
   const [goalDraft, setGoalDraft] = useState(() => String(readCalories(userObj).goal));
   const [editingGoal, setEditingGoal] = useState(false);
   const [note, setNote] = useState('');
@@ -149,6 +150,7 @@ function CaloriePage({ userObj, theme, onBack }) {
       item.name.toLowerCase().includes(savedSearch) || String(item.calories).includes(savedSearch)
     ))
     : book.saved;
+  const keyboardUp = Boolean(viewFrame && viewFrame.height < window.innerHeight * 0.88);
 
   function openSaved() {
     setSavedQuery('');
@@ -163,6 +165,35 @@ function CaloriePage({ userObj, theme, onBack }) {
   useEffect(() => {
     writeDraft(userObj?.email, { name, amount, saveFood });
   }, [name, amount, saveFood, userObj?.email]);
+
+  useEffect(() => {
+    if (!showSaved) {
+      setViewFrame(null);
+      return undefined;
+    }
+    function sync() {
+      const view = window.visualViewport;
+      if (!view) {
+        setViewFrame(null);
+        return;
+      }
+      setViewFrame({
+        top: view.offsetTop,
+        left: view.offsetLeft,
+        width: view.width,
+        height: view.height,
+      });
+    }
+    sync();
+    window.visualViewport?.addEventListener('resize', sync);
+    window.visualViewport?.addEventListener('scroll', sync);
+    window.addEventListener('resize', sync);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', sync);
+      window.visualViewport?.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+    };
+  }, [showSaved]);
 
   function persist(next) {
     const stored = {
@@ -360,9 +391,42 @@ function CaloriePage({ userObj, theme, onBack }) {
       )}
 
       {showSaved ? (
-        <View style={styles.overlay}>
+        <View
+          style={[
+            styles.overlay,
+            viewFrame
+              ? {
+                  top: viewFrame.top,
+                  left: viewFrame.left,
+                  width: viewFrame.width,
+                  height: viewFrame.height,
+                }
+              : null,
+            keyboardUp
+              ? {
+                  justifyContent: 'flex-start',
+                  paddingTop: 12,
+                  paddingBottom: 10,
+                }
+              : {
+                  justifyContent: 'center',
+                  paddingBottom: '22%',
+                },
+          ]}
+        >
           <Pressable aria-label="Close saved foods" style={styles.scrim} onPress={closeSaved} />
-          <View style={[styles.sheet, { backgroundColor: dark ? '#1a1d1d' : '#fff9ef', borderColor: line }]}>
+          <View
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: dark ? '#1a1d1d' : '#fff9ef',
+                borderColor: line,
+                maxHeight: keyboardUp
+                  ? Math.max(180, viewFrame.height - 24)
+                  : '70vh',
+              },
+            ]}
+          >
             <View style={[styles.sheetHead, { borderColor: line }]}>
               <TextFont style={[styles.sheetTitle, { color: ink }]}>Saved foods</TextFont>
               <Pressable aria-label="Close" onPress={closeSaved} style={styles.sheetClose}>
@@ -640,11 +704,11 @@ const styles = StyleSheet.create({
     position: 'fixed',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
+    width: '100%',
+    height: '100%',
     zIndex: 90,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   scrim: {
     position: 'absolute',
