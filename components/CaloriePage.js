@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { StyleSheet, View, Pressable, TextInput, ScrollView } from '../platform';
 import FontAwesome5 from '../platform/icons';
@@ -9,6 +9,36 @@ const DEFAULT_GOAL = 2000;
 
 function storageKey(email) {
   return `mm-calories:${email}`;
+}
+
+function draftKey(email) {
+  return `mm-calorie-draft:${email || 'local'}`;
+}
+
+function readDraft(email) {
+  try {
+    const raw = localStorage.getItem(draftKey(email));
+    if (!raw) return { name: '', amount: '', saveFood: false };
+    const parsed = JSON.parse(raw);
+    return {
+      name: typeof parsed?.name === 'string' ? parsed.name.slice(0, 40) : '',
+      amount: parsed?.amount == null ? '' : String(parsed.amount).slice(0, 8),
+      saveFood: parsed?.saveFood === true,
+    };
+  } catch {
+    return { name: '', amount: '', saveFood: false };
+  }
+}
+
+function writeDraft(email, draft) {
+  const name = draft?.name || '';
+  const amount = draft?.amount == null ? '' : String(draft.amount);
+  const saveFood = Boolean(draft?.saveFood);
+  if (!name.trim() && !amount.trim() && !saveFood) {
+    localStorage.removeItem(draftKey(email));
+    return;
+  }
+  localStorage.setItem(draftKey(email), JSON.stringify({ name, amount, saveFood }));
 }
 
 function todayKey(date = new Date()) {
@@ -93,9 +123,9 @@ function CaloriePage({ userObj, theme, onBack }) {
   const card = dark ? 'rgba(255,249,239,0.07)' : 'rgba(255,255,255,0.82)';
   const line = dark ? 'rgba(255,249,239,0.14)' : 'rgba(36,31,51,0.08)';
   const [book, setBook] = useState(() => readCalories(userObj));
-  const [name, setName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [saveFood, setSaveFood] = useState(false);
+  const [name, setName] = useState(() => readDraft(userObj?.email).name);
+  const [amount, setAmount] = useState(() => readDraft(userObj?.email).amount);
+  const [saveFood, setSaveFood] = useState(() => readDraft(userObj?.email).saveFood);
   const [showSaved, setShowSaved] = useState(false);
   const [savedQuery, setSavedQuery] = useState('');
   const [goalDraft, setGoalDraft] = useState(() => String(readCalories(userObj).goal));
@@ -129,6 +159,10 @@ function CaloriePage({ userObj, theme, onBack }) {
     setShowSaved(false);
     setSavedQuery('');
   }
+
+  useEffect(() => {
+    writeDraft(userObj?.email, { name, amount, saveFood });
+  }, [name, amount, saveFood, userObj?.email]);
 
   function persist(next) {
     const stored = {
@@ -166,6 +200,7 @@ function CaloriePage({ userObj, theme, onBack }) {
     setAmount('');
     setSaveFood(false);
     setNote('');
+    writeDraft(userObj?.email, { name: '', amount: '', saveFood: false });
   }
 
   function addSavedToToday(item) {

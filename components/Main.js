@@ -63,18 +63,9 @@ export default function App( {route} ) {
   useEffect(() => {
     const refreshOnOpen = (nextAppState) => {
       if (nextAppState == 'active') {
-        resetUser();
-      } else {
+        getUser(userObj.email);
+        getGoals(userObj._id, { remount: false });
       }
-    };
-    const resetUser = () => {
-      setRefreshing(true)
-      setGoalsLoading(true);
-      setAllGoals([]);
-      setUserGoals([]);
-      setScore('-');
-      updateKey();
-      refresh();
     };
     // Event listeners for touch and key press events
     AppState.addEventListener('change', refreshOnOpen);
@@ -142,12 +133,13 @@ async function getUser(email){
     setScore(user.dailyScore);
     setuserObj(user);
 }
-async function getGoals(_id) {
+async function getGoals(_id, options = {}) {
+    const remount = options.remount !== false;
     if (!_id) {
       setGoalsLoading(false);
       return;
     }
-    setGoalsLoading(true);
+    if (remount) setGoalsLoading(true);
     const started = Date.now();
     axios.get(`${API_URL}/api/users/goals/${_id}`, {
       params: {
@@ -162,9 +154,9 @@ async function getGoals(_id) {
             sortGoals(ordered);
           }
           setGoalsLoading(false);
-          updateKey();
+          if (remount) updateKey();
         };
-        const wait = Math.max(0, 640 - (Date.now() - started));
+        const wait = remount ? Math.max(0, 640 - (Date.now() - started)) : 0;
         window.setTimeout(show, wait);
       })
       .catch(function (error) {
