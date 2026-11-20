@@ -99,8 +99,14 @@ export function caloriesOn(book, key) {
   return rows.reduce((sum, item) => sum + (Number(item?.calories) > 0 ? Number(item.calories) : 0), 0);
 }
 
-function todayEntries(book) {
-  const rows = book.log[todayKey()];
+function dateForOffset(offset) {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  return date;
+}
+
+function entriesOn(book, key) {
+  const rows = book.log[key];
   if (!Array.isArray(rows)) return [];
   return rows.filter((item) => item && item.name && Number(item.calories) > 0);
 }
@@ -132,14 +138,17 @@ function CaloriePage({ userObj, theme, onBack }) {
   const [goalDraft, setGoalDraft] = useState(() => String(readCalories(userObj).goal));
   const [editingGoal, setEditingGoal] = useState(false);
   const [note, setNote] = useState('');
+  const [viewingYesterday, setViewingYesterday] = useState(false);
 
-  const entries = todayEntries(book);
+  const activeDate = dateForOffset(viewingYesterday ? -1 : 0);
+  const activeKey = todayKey(activeDate);
+  const entries = entriesOn(book, activeKey);
   const eaten = entries.reduce((sum, item) => sum + Number(item.calories), 0);
   const left = book.goal - eaten;
   const goalMet = book.goal > 0 ? Math.min(100, Math.round((Math.min(eaten, book.goal) / book.goal) * 100)) : 0;
   const overflow = book.goal > 0 && eaten > book.goal ? (eaten - book.goal) / book.goal : 0;
   const overflowFill = overflow === 0 ? 0 : (overflow % 1 === 0 ? 100 : Math.round((overflow % 1) * 100));
-  const todayLabel = new Date().toLocaleDateString(undefined, {
+  const dateLabel = activeDate.toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
@@ -220,11 +229,11 @@ function CaloriePage({ userObj, theme, onBack }) {
       setNote('Enter calories greater than 0.');
       return;
     }
-    const key = todayKey();
+    const key = activeKey;
     const entry = { id: `${Date.now()}`, name: title.slice(0, 40), calories: Math.round(calories) };
     persist({
       ...book,
-      log: { ...book.log, [key]: [...todayEntries(book), entry] },
+      log: { ...book.log, [key]: [...entriesOn(book, key), entry] },
       saved: saveFood ? upsertSaved(book.saved, entry) : book.saved,
     });
     setName('');
@@ -234,13 +243,13 @@ function CaloriePage({ userObj, theme, onBack }) {
     writeDraft(userObj?.email, { name: '', amount: '', saveFood: false });
   }
 
-  function addSavedToToday(item) {
-    const key = todayKey();
+  function addSavedToDay(item) {
+    const key = activeKey;
     persist({
       ...book,
       log: {
         ...book.log,
-        [key]: [...todayEntries(book), { id: `${Date.now()}`, name: item.name, calories: item.calories }],
+        [key]: [...entriesOn(book, key), { id: `${Date.now()}`, name: item.name, calories: item.calories }],
       },
     });
     closeSaved();
@@ -255,11 +264,16 @@ function CaloriePage({ userObj, theme, onBack }) {
   }
 
   function removeFood(id) {
-    const key = todayKey();
+    const key = activeKey;
     persist({
       ...book,
-      log: { ...book.log, [key]: todayEntries(book).filter((item) => item.id !== id) },
+      log: { ...book.log, [key]: entriesOn(book, key).filter((item) => item.id !== id) },
     });
+  }
+
+  function showDay(yesterday) {
+    setViewingYesterday(yesterday);
+    setNote('');
   }
 
   function startGoalEdit() {
@@ -312,7 +326,31 @@ function CaloriePage({ userObj, theme, onBack }) {
         )}
       </View>
       <TextFont style={[styles.title, { color: ink }]}>Calories</TextFont>
-      <TextFont style={[styles.date, { color: muted }]}>{todayLabel}</TextFont>
+      <TextFont style={[styles.date, { color: muted }]}>{dateLabel}</TextFont>
+      <View style={[styles.daySwitch, { borderColor: line }]}>
+        <Pressable
+          aria-label="Yesterday's calories"
+          aria-pressed={viewingYesterday}
+          onPress={() => showDay(true)}
+          style={[
+            styles.daySwitchItem,
+            viewingYesterday ? { backgroundColor: card } : null,
+          ]}
+        >
+          <TextFont style={[styles.daySwitchText, { color: viewingYesterday ? ink : muted }]}>Yesterday</TextFont>
+        </Pressable>
+        <Pressable
+          aria-label="Today's calories"
+          aria-pressed={!viewingYesterday}
+          onPress={() => showDay(false)}
+          style={[
+            styles.daySwitchItem,
+            !viewingYesterday ? { backgroundColor: card } : null,
+          ]}
+        >
+          <TextFont style={[styles.daySwitchText, { color: viewingYesterday ? muted : ink }]}>Today</TextFont>
+        </Pressable>
+      </View>
 
       <View style={[styles.summary, { backgroundColor: card, borderColor: line }]}>
         <View style={styles.summaryRow}>
@@ -375,9 +413,11 @@ function CaloriePage({ userObj, theme, onBack }) {
       </View>
       {note ? <TextFont style={[styles.note, { color: muted }]}>{note}</TextFont> : null}
 
-      <TextFont style={[styles.section, { color: muted }]}>Today</TextFont>
+      <TextFont style={[styles.section, { color: muted }]}>{viewingYesterday ? 'Yesterday' : 'Today'}</TextFont>
       {entries.length === 0 ? (
-        <TextFont style={[styles.empty, { color: muted }]}>Nothing logged yet.</TextFont>
+        <TextFont style={[styles.empty, { color: muted }]}>
+          {viewingYesterday ? 'Nothing logged yesterday.' : 'Nothing logged yet.'}
+        </TextFont>
       ) : (
         entries.map((item) => (
           <View key={item.id} style={[styles.entry, { backgroundColor: card, borderColor: line }]}>
@@ -453,7 +493,7 @@ function CaloriePage({ userObj, theme, onBack }) {
                   <View key={item.id} style={[styles.entry, styles.sheetEntry, { backgroundColor: card, borderColor: line }]}>
                     <Pressable
                       aria-label={`Add ${item.name}`}
-                      onPress={() => addSavedToToday(item)}
+                      onPress={() => addSavedToDay(item)}
                       style={styles.sheetFood}
                     >
                       <TextFont style={[styles.food, { color: ink }]}>{item.name}</TextFont>
@@ -507,7 +547,25 @@ const styles = StyleSheet.create({
     width: '88%',
     fontSize: 14,
     marginTop: 4,
-    marginBottom: 18,
+    marginBottom: 10,
+  },
+  daySwitch: {
+    width: '88%',
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  daySwitchItem: {
+    flex: 1,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  daySwitchText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   summary: {
     width: '88%',
